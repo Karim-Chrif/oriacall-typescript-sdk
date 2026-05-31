@@ -13,12 +13,27 @@ export interface ListSpacesOptions {
   cursor?: string;
 }
 
+export interface VueVoxResponseMetadata {
+  requestId?: string;
+  status: number;
+}
+
+export interface VueVoxApiResponse<T> extends VueVoxResponseMetadata {
+  data: T;
+}
+
+export interface VueVoxResponseEvent extends VueVoxResponseMetadata {
+  method: string;
+  path: string;
+}
+
 export interface VueVoxClientOptions {
   baseUrl?: string;
   clientId: string;
   clientSecret: string;
   scope?: string | string[];
   fetch?: typeof fetch;
+  onResponse?: (event: VueVoxResponseEvent) => void;
 }
 
 interface CachedToken {
@@ -51,6 +66,8 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     });
 
     const body = await parseJson<TokenResponse | ErrorResponse>(response);
+    const requestId = getRequestId(response, body);
+    notifyResponse(options, "POST", "/oauth/token", response, requestId);
 
     if (!response.ok) {
       const error = isErrorResponse(body) ? body.error : null;
@@ -60,11 +77,18 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         error?.code ?? "token_request_failed",
         error?.message ?? "VueVox token request failed.",
         isErrorResponse(body) ? body : undefined,
+        requestId,
       );
     }
 
     if (!isTokenResponse(body)) {
-      throw new VueVoxApiError(response.status, "invalid_token_response", "VueVox returned an invalid token response.");
+      throw new VueVoxApiError(
+        response.status,
+        "invalid_token_response",
+        "VueVox returned an invalid token response.",
+        undefined,
+        requestId,
+      );
     }
 
     cachedToken = {
@@ -75,13 +99,15 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return cachedToken.accessToken;
   }
 
-  async function hello(): Promise<HelloResponse> {
+  async function hello(): Promise<VueVoxApiResponse<HelloResponse>> {
     const accessToken = await getAccessToken();
     const { data, error, response } = await raw.GET("/v1/hello", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+    const requestId = getRequestId(response, error);
+    notifyResponse(options, "GET", "/v1/hello", response, requestId);
 
     if (error) {
       throw new VueVoxApiError(
@@ -89,22 +115,25 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         error.error.code,
         error.error.message,
         error,
+        requestId,
       );
     }
 
-    return data;
+    return withMetadata(data, response, requestId);
   }
 
-  async function listSpaces(options: ListSpacesOptions = {}): Promise<SpacesListResponse> {
+  async function listSpaces(listOptions: ListSpacesOptions = {}): Promise<VueVoxApiResponse<SpacesListResponse>> {
     const accessToken = await getAccessToken();
     const { data, error, response } = await raw.GET("/v1/spaces", {
       params: {
-        query: options,
+        query: listOptions,
       },
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+    const requestId = getRequestId(response, error);
+    notifyResponse(options, "GET", "/v1/spaces", response, requestId);
 
     if (error) {
       throw new VueVoxApiError(
@@ -112,10 +141,11 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         error.error.code,
         error.error.message,
         error,
+        requestId,
       );
     }
 
-    return data;
+    return withMetadata(data, response, requestId);
   }
 
   return {
@@ -152,4 +182,35 @@ function isTokenResponse(value: TokenResponse | ErrorResponse | null): value is 
 
 function isErrorResponse(value: TokenResponse | ErrorResponse | null): value is ErrorResponse {
   return Boolean(value && "error" in value);
+}
+
+function getRequestId(response: Response, body?: ErrorResponse | TokenResponse | null): string | undefined {
+  return response.headers.get("X-Request-Id") ?? (isErrorBody(body) ? body.error.requestId : undefined);
+}
+
+function isErrorBody(value: ErrorResponse | TokenResponse | null | undefined): value is ErrorResponse {
+  return Boolean(value && "error" in value);
+}
+
+function withMetadata<T>(data: T, response: Response, requestId: string | undefined): VueVoxApiResponse<T> {
+  return {
+    data,
+    requestId,
+    status: response.status,
+  };
+}
+
+function notifyResponse(
+  options: VueVoxClientOptions,
+  method: string,
+  path: string,
+  response: Response,
+  requestId: string | undefined,
+): void {
+  options.onResponse?.({
+    method,
+    path,
+    requestId,
+    status: response.status,
+  });
 }

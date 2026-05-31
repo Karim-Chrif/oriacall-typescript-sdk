@@ -37,17 +37,43 @@ const vuevox = createVueVoxClient({
 });
 
 const hello = await vuevox.hello();
-console.log(hello.message);
+console.log(hello.data.message);
+console.log(hello.requestId);
 
 const spaces = await vuevox.listSpaces({ limit: 50 });
-console.log(spaces.data);
+console.log(spaces.data.data);
+console.log(spaces.requestId);
 ```
 
 The SDK requests and caches a short-lived access token using client credentials, then sends it as a bearer token for API calls.
 
+## Request IDs
+
+Every Developer API response includes an `X-Request-Id` header. SDK endpoint methods return response metadata with the response body so you can log that ID for support requests.
+
+```ts
+const spaces = await vuevox.listSpaces({ limit: 50 });
+
+console.log(spaces.requestId);
+console.log(spaces.data.data);
+```
+
+For centralized logging, pass `onResponse`. The hook runs for every SDK-managed HTTP response, including the token request.
+
+```ts
+const vuevox = createVueVoxClient({
+  clientId: process.env.VUEVOX_CLIENT_ID!,
+  clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
+  scope: ["hello:read", "spaces:read"],
+  onResponse: ({ method, path, status, requestId }) => {
+    console.log({ method, path, status, requestId });
+  },
+});
+```
+
 ## Error Handling
 
-API errors throw `VueVoxApiError`.
+API errors throw `VueVoxApiError`. The SDK exposes `error.requestId` from either the response header or error body.
 
 ```ts
 import { VueVoxApiError, createVueVoxClient } from "@vuevox/sdk";
@@ -62,7 +88,7 @@ try {
   await vuevox.listSpaces({ limit: 50 });
 } catch (error) {
   if (error instanceof VueVoxApiError) {
-    console.error(error.status, error.code, error.message);
+    console.error(error.status, error.code, error.message, error.requestId);
   }
 
   throw error;
@@ -127,10 +153,10 @@ List endpoints use cursor pagination.
 ```ts
 const firstPage = await vuevox.listSpaces({ limit: 50 });
 
-if (firstPage.pagination.nextCursor) {
+if (firstPage.data.pagination.nextCursor) {
   const secondPage = await vuevox.listSpaces({
     limit: 50,
-    cursor: firstPage.pagination.nextCursor,
+    cursor: firstPage.data.pagination.nextCursor,
   });
 }
 ```
