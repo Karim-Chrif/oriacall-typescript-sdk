@@ -1,7 +1,7 @@
 {
   "name": "@vuevox/sdk",
   "version": "0.1.0",
-  "private": true,
+  "description": "TypeScript SDK for the VueVox Developer API.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,12 +12,28 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "keywords": [
+    "vuevox",
+    "sdk",
+    "api",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "generate": "openapi-typescript ../../openapi/openapi.yaml -o src/generated/schema.d.ts",
-    "build": "tsc --outDir dist && mkdir -p dist/generated && cp src/generated/schema.d.ts dist/generated/schema.d.ts",
-    "typecheck": "tsc --noEmit"
+    "build": "rm -rf dist && tsc --outDir dist && mkdir -p dist/generated && cp src/generated/schema.d.ts dist/generated/schema.d.ts",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build",
+    "pack:dry-run": "npm pack --dry-run",
+    "publish:dry-run": "npm publish --dry-run --access public"
   },
   "dependencies": {
     "openapi-fetch": "^0.14.0"
