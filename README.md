@@ -18,10 +18,11 @@ Settings -> Developer API -> Manage API Clients
 
 Create a client, select the scopes it can request, and copy the `client_secret` immediately. VueVox shows each client secret only once.
 
-Available scope:
+Available scopes:
 
 ```text
 hello:read
+spaces:read
 ```
 
 ## Basic Usage
@@ -32,11 +33,14 @@ import { createVueVoxClient } from "@vuevox/sdk";
 const vuevox = createVueVoxClient({
   clientId: process.env.VUEVOX_CLIENT_ID!,
   clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
-  scope: "hello:read",
+  scope: ["hello:read", "spaces:read"],
 });
 
 const hello = await vuevox.hello();
 console.log(hello.message);
+
+const spaces = await vuevox.listSpaces({ limit: 50 });
+console.log(spaces.data);
 ```
 
 The SDK requests and caches a short-lived access token using client credentials, then sends it as a bearer token for API calls.
@@ -51,11 +55,11 @@ import { VueVoxApiError, createVueVoxClient } from "@vuevox/sdk";
 const vuevox = createVueVoxClient({
   clientId: process.env.VUEVOX_CLIENT_ID!,
   clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
-  scope: "hello:read",
+  scope: ["hello:read", "spaces:read"],
 });
 
 try {
-  await vuevox.hello();
+  await vuevox.listSpaces({ limit: 50 });
 } catch (error) {
   if (error instanceof VueVoxApiError) {
     console.error(error.status, error.code, error.message);
@@ -100,7 +104,7 @@ const vuevox = createVueVoxClient({
   baseUrl: "https://api.vuevox.com",
   clientId: process.env.VUEVOX_CLIENT_ID!,
   clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
-  scope: "hello:read",
+  scope: ["hello:read", "spaces:read"],
 });
 ```
 
@@ -114,4 +118,19 @@ const { data, error } = await vuevox.raw.GET("/v1/hello", {
     Authorization: `Bearer ${await vuevox.getAccessToken()}`,
   },
 });
+```
+
+## Pagination
+
+List endpoints use cursor pagination.
+
+```ts
+const firstPage = await vuevox.listSpaces({ limit: 50 });
+
+if (firstPage.pagination.nextCursor) {
+  const secondPage = await vuevox.listSpaces({
+    limit: 50,
+    cursor: firstPage.pagination.nextCursor,
+  });
+}
 ```

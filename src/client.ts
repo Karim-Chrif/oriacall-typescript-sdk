@@ -6,6 +6,12 @@ import type { components, paths } from "./generated/schema.js";
 type TokenResponse = components["schemas"]["TokenResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
 type HelloResponse = components["schemas"]["HelloResponse"];
+type SpacesListResponse = components["schemas"]["SpacesListResponse"];
+
+export interface ListSpacesOptions {
+  limit?: number;
+  cursor?: string;
+}
 
 export interface VueVoxClientOptions {
   baseUrl?: string;
@@ -89,9 +95,33 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return data;
   }
 
+  async function listSpaces(options: ListSpacesOptions = {}): Promise<SpacesListResponse> {
+    const accessToken = await getAccessToken();
+    const { data, error, response } = await raw.GET("/v1/spaces", {
+      params: {
+        query: options,
+      },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (error) {
+      throw new VueVoxApiError(
+        response.status,
+        error.error.code,
+        error.error.message,
+        error,
+      );
+    }
+
+    return data;
+  }
+
   return {
     getAccessToken,
     hello,
+    listSpaces,
     raw,
   };
 }
