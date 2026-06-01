@@ -64,6 +64,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organization calls
+         * @description Returns calls for the API client's organization using cursor pagination. List responses do not expose audio storage paths or transcripts.
+         */
+        get: operations["listCalls"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/calls/{callId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a call
+         * @description Returns a single organization-scoped call with transcript and analysis details.
+         */
+        get: operations["getCall"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organization leads
+         * @description Returns leads for the API client's organization using cursor pagination. The leads:read scope includes email and phone contact details.
+         */
+        get: operations["listLeads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/leads/{leadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a lead
+         * @description Returns a single organization-scoped lead with contact details.
+         */
+        get: operations["getLead"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -75,7 +155,7 @@ export interface components {
             client_secret: string;
             /**
              * @description Space-separated scopes requested for the access token.
-             * @example hello:read
+             * @example hello:read spaces:read calls:read leads:read
              */
             scope?: string;
         };
@@ -85,7 +165,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read */
+            /** @example hello:read spaces:read calls:read leads:read */
             scope: string;
         };
         HelloResponse: {
@@ -107,6 +187,81 @@ export interface components {
         SpacesListResponse: {
             data: components["schemas"]["Space"][];
             pagination: components["schemas"]["CursorPagination"];
+        };
+        ResourceSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        } | null;
+        LeadSummary: {
+            /** Format: uuid */
+            id: string;
+            firstName: string;
+            lastName: string;
+        } | null;
+        CallSummary: {
+            /** Format: uuid */
+            id: string;
+            space: components["schemas"]["ResourceSummary"];
+            lead: components["schemas"]["LeadSummary"];
+            agent: components["schemas"]["ResourceSummary"];
+            /** @description Call duration in seconds. */
+            duration: number;
+            score: number | null;
+            sentiment: string | null;
+            /** @example completed */
+            analysisStatus: string;
+            /** @example processing */
+            queueStatus: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CallDetail: components["schemas"]["CallSummary"] & {
+            transcript: {
+                [key: string]: unknown;
+            }[] | null;
+            analysis: components["schemas"]["CallAnalysis"];
+        };
+        CallAnalysis: {
+            summary: string | null;
+            totalScore: number;
+            totalMax: number;
+            sentiment: string;
+            objectiveMet: boolean;
+            objectiveNotes: string | null;
+            detectedTags: string[] | null;
+            strengths: string[] | null;
+            weaknesses: string[] | null;
+        } | null;
+        CallsListResponse: {
+            data: components["schemas"]["CallSummary"][];
+            pagination: components["schemas"]["CursorPagination"];
+        };
+        CallDetailResponse: {
+            data: components["schemas"]["CallDetail"];
+        };
+        Lead: {
+            /** Format: uuid */
+            id: string;
+            firstName: string;
+            lastName: string;
+            /** Format: email */
+            email: string | null;
+            phone: string | null;
+            space: components["schemas"]["ResourceSummary"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LeadsListResponse: {
+            data: components["schemas"]["Lead"][];
+            pagination: components["schemas"]["CursorPagination"];
+        };
+        LeadDetailResponse: {
+            data: components["schemas"]["Lead"];
         };
         CursorPagination: {
             /** @example 50 */
@@ -284,6 +439,278 @@ export interface operations {
             };
             /** @description Query parameters failed validation. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCalls: {
+        parameters: {
+            query?: {
+                /** @description Number of calls to return. Defaults to 50. Maximum is 100. */
+                limit?: number;
+                /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
+                cursor?: string;
+                /** @description Filter calls to a space ID. */
+                spaceId?: string;
+                /** @description Filter calls to a lead ID. */
+                leadId?: string;
+                /** @description Filter calls to an agent ID. */
+                agentId?: string;
+                /** @description Return calls created at or after this timestamp. */
+                createdAfter?: string;
+                /** @description Return calls created at or before this timestamp. */
+                createdBefore?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated calls response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallsListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Query parameters failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Call ID. */
+                callId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Call detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallDetailResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Call was not found in the API client's organization. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listLeads: {
+        parameters: {
+            query?: {
+                /** @description Number of leads to return. Defaults to 50. Maximum is 100. */
+                limit?: number;
+                /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
+                cursor?: string;
+                /** @description Filter leads to a space ID. */
+                spaceId?: string;
+                /** @description Return leads created at or after this timestamp. */
+                createdAfter?: string;
+                /** @description Return leads created at or before this timestamp. */
+                createdBefore?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated leads response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadsListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Query parameters failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getLead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Lead ID. */
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lead detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetailResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lead was not found in the API client's organization. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
