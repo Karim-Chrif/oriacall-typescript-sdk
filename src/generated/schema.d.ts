@@ -211,6 +211,8 @@ export interface components {
         Agent: {
             /** Format: uuid */
             id: string;
+            /** @description Optional ID from an external system. */
+            externalId: string | null;
             /** @example Morgan Agent */
             name: string;
             spaces: components["schemas"]["ResourceSummary"][];
@@ -231,15 +233,24 @@ export interface components {
         LeadSummary: {
             /** Format: uuid */
             id: string;
+            /** @description Optional ID from an external system. */
+            externalId: string | null;
             firstName: string;
             lastName: string;
+        } | null;
+        AgentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** @description Optional ID from an external system. */
+            externalId: string | null;
+            name: string;
         } | null;
         CallSummary: {
             /** Format: uuid */
             id: string;
             space: components["schemas"]["ResourceSummary"];
             lead: components["schemas"]["LeadSummary"];
-            agent: components["schemas"]["ResourceSummary"];
+            agent: components["schemas"]["AgentSummary"];
             /** @description Call duration in seconds. */
             duration: number;
             score: number | null;
@@ -280,6 +291,8 @@ export interface components {
         Lead: {
             /** Format: uuid */
             id: string;
+            /** @description Optional ID from an external system. */
+            externalId: string | null;
             firstName: string;
             lastName: string;
             /** Format: email */

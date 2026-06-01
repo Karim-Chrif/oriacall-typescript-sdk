@@ -218,6 +218,8 @@ Returns: `AsyncGenerator<Space>`.
 
 Lists organization agents.
 
+Agent records include nullable `externalId` when you store an ID from another system.
+
 Required scope: `agents:read`.
 
 Options: `ListAgentsOptions`
@@ -232,7 +234,7 @@ Options: `ListAgentsOptions`
 const response = await vuevox.agents.list({ limit: 50, spaceId: "space-id" });
 
 for (const agent of response.data.data) {
-  console.log(agent.id, agent.name);
+  console.log(agent.id, agent.externalId, agent.name);
 }
 ```
 
@@ -248,7 +250,7 @@ Options: `ListAgentsOptions`
 
 ```ts
 for await (const agent of vuevox.agents.paginate({ spaceId: "space-id" })) {
-  console.log(agent.id, agent.name);
+  console.log(agent.id, agent.externalId, agent.name);
 }
 ```
 
@@ -319,6 +321,8 @@ Returns: `AsyncGenerator<CallSummary>`.
 
 Lists organization leads. The `leads:read` scope includes lead email and phone contact details.
 
+Lead records include nullable `externalId` when you store an ID from another system.
+
 Required scope: `leads:read`.
 
 Options: `ListLeadsOptions`
@@ -335,7 +339,7 @@ Options: `ListLeadsOptions`
 const response = await vuevox.leads.list({ limit: 50, spaceId: "space-id" });
 
 for (const lead of response.data.data) {
-  console.log(lead.id, lead.email, lead.phone);
+  console.log(lead.id, lead.externalId, lead.email, lead.phone);
 }
 ```
 
@@ -349,7 +353,7 @@ Required scope: `leads:read`.
 
 ```ts
 const response = await vuevox.leads.get("lead-id");
-console.log(response.data.email, response.data.phone);
+console.log(response.data.externalId, response.data.email, response.data.phone);
 ```
 
 Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
@@ -364,7 +368,7 @@ Options: `ListLeadsOptions`
 
 ```ts
 for await (const lead of vuevox.leads.paginate({ createdAfter: "2026-01-01T00:00:00.000Z" })) {
-  console.log(lead.id);
+  console.log(lead.id, lead.externalId);
 }
 ```
 
