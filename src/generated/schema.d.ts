@@ -161,7 +161,75 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /**
+         * Update a lead
+         * @description Updates an organization-scoped lead and its custom fields.
+         */
+        patch: operations["updateLead"];
+        trace?: never;
+    };
+    "/v1/leads/by-external-id/{externalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upsert a lead by external ID
+         * @description Creates or updates a lead identified by the CRM/system external ID.
+         */
+        put: operations["upsertLeadByExternalId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/lead-custom-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List lead custom field definitions
+         * @description Returns lead custom field definitions for the API client's organization.
+         */
+        get: operations["listLeadCustomFields"];
+        put?: never;
+        /**
+         * Create a lead custom field definition
+         * @description Creates a typed lead custom field definition for CRM integrations and platform filters.
+         */
+        post: operations["createLeadCustomField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/lead-custom-fields/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a lead custom field definition
+         * @description Updates mutable metadata for a lead custom field definition. Keys and types are immutable.
+         */
+        patch: operations["updateLeadCustomField"];
         trace?: never;
     };
 }
@@ -175,7 +243,7 @@ export interface components {
             client_secret: string;
             /**
              * @description Space-separated scopes requested for the access token.
-             * @example hello:read spaces:read agents:read calls:read leads:read
+             * @example hello:read spaces:read agents:read calls:read leads:read leads:write lead_custom_fields:manage
              */
             scope?: string;
         };
@@ -185,7 +253,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read spaces:read agents:read calls:read leads:read */
+            /** @example hello:read spaces:read agents:read calls:read leads:read leads:write lead_custom_fields:manage */
             scope: string;
         };
         HelloResponse: {
@@ -237,6 +305,7 @@ export interface components {
             externalId: string | null;
             firstName: string;
             lastName: string;
+            customFields: components["schemas"]["CustomFields"];
         } | null;
         AgentSummary: {
             /** Format: uuid */
@@ -298,6 +367,7 @@ export interface components {
             /** Format: email */
             email: string | null;
             phone: string | null;
+            customFields: components["schemas"]["CustomFields"];
             space: components["schemas"]["ResourceSummary"];
             /** Format: date-time */
             createdAt: string;
@@ -310,6 +380,72 @@ export interface components {
         };
         LeadDetailResponse: {
             data: components["schemas"]["Lead"];
+        };
+        LeadUpsertRequest: {
+            firstName: string;
+            lastName: string;
+            /** Format: email */
+            email?: string | null;
+            phone?: string | null;
+            /** Format: uuid */
+            spaceId?: string | null;
+            customFields?: components["schemas"]["CustomFields"];
+        };
+        LeadUpdateRequest: {
+            firstName?: string;
+            lastName?: string;
+            /** Format: email */
+            email?: string | null;
+            phone?: string | null;
+            /** Format: uuid */
+            spaceId?: string | null;
+            customFields?: components["schemas"]["CustomFields"];
+        };
+        /** @description Lead custom field values keyed by custom field key. */
+        CustomFields: {
+            [key: string]: string | number | boolean | string[] | null;
+        };
+        /** @description Custom field filters keyed by custom field key. Scalar values use equality; objects specify one operator. */
+        CustomFieldFilters: {
+            [key: string]: string | number | boolean | {
+                [key: string]: string | number | boolean;
+            };
+        };
+        LeadCustomField: {
+            /** @example crm_stage */
+            key: string;
+            /** @example CRM Stage */
+            label: string;
+            /** @enum {string} */
+            type: "text" | "number" | "boolean" | "date" | "datetime" | "select" | "multi_select";
+            options: string[];
+            isFilterable: boolean;
+            archived: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LeadCustomFieldsListResponse: {
+            data: components["schemas"]["LeadCustomField"][];
+        };
+        LeadCustomFieldResponse: {
+            data: components["schemas"]["LeadCustomField"];
+        };
+        LeadCustomFieldCreateRequest: {
+            key: string;
+            label: string;
+            /** @enum {string} */
+            type: "text" | "number" | "boolean" | "date" | "datetime" | "select" | "multi_select";
+            options?: string[];
+            /** @default true */
+            isFilterable: boolean;
+        };
+        LeadCustomFieldUpdateRequest: {
+            label?: string;
+            options?: string[];
+            isFilterable?: boolean;
+            archived?: boolean;
         };
         CursorPagination: {
             /** @example 50 */
@@ -593,6 +729,8 @@ export interface operations {
                 createdAfter?: string;
                 /** @description Return calls created at or before this timestamp. */
                 createdBefore?: string;
+                /** @description Filter calls by lead custom fields. Use equality by default, or one operator such as gte, lte, contains, before, or after. */
+                leadCustom?: components["schemas"]["CustomFieldFilters"];
             };
             header?: never;
             path?: never;
@@ -727,6 +865,8 @@ export interface operations {
                 createdAfter?: string;
                 /** @description Return leads created at or before this timestamp. */
                 createdBefore?: string;
+                /** @description Filter leads by custom fields. Use equality by default, or one operator such as gte, lte, contains, before, or after. */
+                custom?: components["schemas"]["CustomFieldFilters"];
             };
             header?: never;
             path?: never;
@@ -840,6 +980,296 @@ export interface operations {
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
                     "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateLead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Lead ID. */
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Lead updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetailResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lead was not found in the API client's organization. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upsertLeadByExternalId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description External lead ID from the integrating system. */
+                externalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Existing lead updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetailResponse"];
+                };
+            };
+            /** @description New lead created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetailResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listLeadCustomFields: {
+        parameters: {
+            query?: {
+                /** @description Include archived field definitions. */
+                includeArchived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lead custom field definitions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCustomFieldsListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createLeadCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCustomFieldCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Lead custom field created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCustomFieldResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A custom field with this key already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateLeadCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Custom field key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCustomFieldUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Lead custom field updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCustomFieldResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Custom field was not found in the API client's organization. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {

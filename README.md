@@ -32,6 +32,8 @@ spaces:read
 agents:read
 calls:read
 leads:read
+leads:write
+lead_custom_fields:manage
 ```
 
 The token request can only request scopes that were granted to that API client.
@@ -105,7 +107,12 @@ vuevox.calls.get("call-id");
 vuevox.calls.paginate();
 vuevox.leads.list();
 vuevox.leads.get("lead-id");
+vuevox.leads.update("lead-id", { customFields: { crm_stage: "qualified" } });
+vuevox.leads.upsertByExternalId("crm-lead-id", { firstName: "Ada", lastName: "Lovelace" });
 vuevox.leads.paginate();
+vuevox.leadCustomFields.list();
+vuevox.leadCustomFields.create({ key: "crm_stage", label: "CRM Stage", type: "select", options: ["new", "qualified"] });
+vuevox.leadCustomFields.update("crm_stage", { label: "CRM Stage" });
 vuevox.raw.GET("/v1/hello", { headers: { Authorization: `Bearer ${await vuevox.getAccessToken()}` } });
 ```
 
@@ -273,12 +280,16 @@ Options: `ListCallsOptions`
 | `agentId` | `string` | Optional agent ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for call creation time. |
 | `createdBefore` | `string` | Optional ISO 8601 upper bound for call creation time. |
+| `leadCustomFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields attached to calls. |
 
 ```ts
 const response = await vuevox.calls.list({
   limit: 50,
   spaceId: "space-id",
   createdAfter: "2026-01-01T00:00:00.000Z",
+  leadCustomFields: {
+    crm_stage: "qualified",
+  },
 });
 
 for (const call of response.data.data) {
@@ -321,7 +332,7 @@ Returns: `AsyncGenerator<CallSummary>`.
 
 Lists organization leads. The `leads:read` scope includes lead email and phone contact details.
 
-Lead records include nullable `externalId` when you store an ID from another system.
+Lead records include nullable `externalId` when you store an ID from another system, and a `customFields` object for organization-defined CRM fields.
 
 Required scope: `leads:read`.
 
@@ -334,12 +345,20 @@ Options: `ListLeadsOptions`
 | `spaceId` | `string` | Optional space ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for lead creation time. |
 | `createdBefore` | `string` | Optional ISO 8601 upper bound for lead creation time. |
+| `customFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields. |
 
 ```ts
-const response = await vuevox.leads.list({ limit: 50, spaceId: "space-id" });
+const response = await vuevox.leads.list({
+  limit: 50,
+  spaceId: "space-id",
+  customFields: {
+    crm_stage: "qualified",
+    deal_value: { gte: 10000 },
+  },
+});
 
 for (const lead of response.data.data) {
-  console.log(lead.id, lead.externalId, lead.email, lead.phone);
+  console.log(lead.id, lead.externalId, lead.email, lead.phone, lead.customFields);
 }
 ```
 
@@ -353,7 +372,53 @@ Required scope: `leads:read`.
 
 ```ts
 const response = await vuevox.leads.get("lead-id");
-console.log(response.data.externalId, response.data.email, response.data.phone);
+console.log(response.data.data.externalId, response.data.data.email, response.data.data.phone, response.data.data.customFields);
+```
+
+Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
+
+### `vuevox.leads.update(leadId, input)`
+
+Updates a lead and/or its custom fields.
+
+Required scope: `leads:write`.
+
+Input: `LeadUpdateRequest`
+
+```ts
+const response = await vuevox.leads.update("lead-id", {
+  email: "ada@example.com",
+  customFields: {
+    crm_stage: "qualified",
+    renewal_date: "2026-09-01",
+  },
+});
+
+console.log(response.data.data.customFields);
+```
+
+Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
+
+### `vuevox.leads.upsertByExternalId(externalId, input)`
+
+Creates or updates a lead by the integrating CRM/system ID. This is the preferred write method for CRM integrations because callers can use their own stable lead ID.
+
+Required scope: `leads:write`.
+
+Input: `LeadUpsertRequest`
+
+```ts
+const response = await vuevox.leads.upsertByExternalId("hubspot_123", {
+  firstName: "Ada",
+  lastName: "Lovelace",
+  email: "ada@example.com",
+  customFields: {
+    crm_stage: "qualified",
+    deal_value: 12000,
+  },
+});
+
+console.log(response.data.data.id, response.data.data.customFields);
 ```
 
 Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
@@ -373,6 +438,64 @@ for await (const lead of vuevox.leads.paginate({ createdAfter: "2026-01-01T00:00
 ```
 
 Returns: `AsyncGenerator<Lead>`.
+
+### `vuevox.leadCustomFields.list(options?)`
+
+Lists organization lead custom field definitions.
+
+Required scope: `leads:read`.
+
+Options: `ListLeadCustomFieldsOptions`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `includeArchived` | `boolean` | Include archived definitions. Defaults to `false`. |
+
+```ts
+const response = await vuevox.leadCustomFields.list();
+console.log(response.data.data);
+```
+
+Returns: `Promise<VueVoxApiResponse<LeadCustomFieldsListResponse>>`.
+
+### `vuevox.leadCustomFields.create(input)`
+
+Creates a lead custom field definition. Supported types are `text`, `number`, `boolean`, `date`, `datetime`, `select`, and `multi_select`.
+
+Required scope: `lead_custom_fields:manage`.
+
+Input: `LeadCustomFieldCreateRequest`
+
+```ts
+const response = await vuevox.leadCustomFields.create({
+  key: "crm_stage",
+  label: "CRM Stage",
+  type: "select",
+  options: ["new", "qualified", "customer"],
+  isFilterable: true,
+});
+
+console.log(response.data.data.key);
+```
+
+Returns: `Promise<VueVoxApiResponse<LeadCustomFieldResponse>>`.
+
+### `vuevox.leadCustomFields.update(key, input)`
+
+Updates mutable metadata for a lead custom field definition. Field keys and types are immutable.
+
+Required scope: `lead_custom_fields:manage`.
+
+Input: `LeadCustomFieldUpdateRequest`
+
+```ts
+await vuevox.leadCustomFields.update("crm_stage", {
+  label: "CRM Pipeline Stage",
+  archived: false,
+});
+```
+
+Returns: `Promise<VueVoxApiResponse<LeadCustomFieldResponse>>`.
 
 ## Lower-Level Calls
 
@@ -429,6 +552,8 @@ rate_limited
 invalid_request
 call_not_found
 lead_not_found
+custom_field_not_found
+custom_field_conflict
 ```
 
 ## Retries
@@ -485,12 +610,22 @@ import type {
   CallDetailResponse,
   CallsListResponse,
   CallSummary,
+  CustomFieldFilters,
+  CustomFieldFilterValue,
   HelloResponse,
   Lead,
+  LeadCustomField,
+  LeadCustomFieldCreateRequest,
+  LeadCustomFieldResponse,
+  LeadCustomFieldUpdateRequest,
+  LeadCustomFieldsListResponse,
   LeadDetailResponse,
+  LeadUpdateRequest,
+  LeadUpsertRequest,
   LeadsListResponse,
   ListAgentsOptions,
   ListCallsOptions,
+  ListLeadCustomFieldsOptions,
   ListLeadsOptions,
   ListSpacesOptions,
   Space,

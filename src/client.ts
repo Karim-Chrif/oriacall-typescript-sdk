@@ -5,17 +5,27 @@ import type { components, paths } from "./generated/schema.js";
 
 type TokenResponse = components["schemas"]["TokenResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
-type HelloResponse = components["schemas"]["HelloResponse"];
-type SpacesListResponse = components["schemas"]["SpacesListResponse"];
-type AgentsListResponse = components["schemas"]["AgentsListResponse"];
-type CallsListResponse = components["schemas"]["CallsListResponse"];
-type CallDetailResponse = components["schemas"]["CallDetailResponse"];
-type LeadsListResponse = components["schemas"]["LeadsListResponse"];
-type LeadDetailResponse = components["schemas"]["LeadDetailResponse"];
-type Space = components["schemas"]["Space"];
-type Agent = components["schemas"]["Agent"];
-type CallSummary = components["schemas"]["CallSummary"];
-type Lead = components["schemas"]["Lead"];
+export type HelloResponse = components["schemas"]["HelloResponse"];
+export type SpacesListResponse = components["schemas"]["SpacesListResponse"];
+export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
+export type CallsListResponse = components["schemas"]["CallsListResponse"];
+export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
+export type LeadsListResponse = components["schemas"]["LeadsListResponse"];
+export type LeadDetailResponse = components["schemas"]["LeadDetailResponse"];
+export type LeadCustomFieldsListResponse = components["schemas"]["LeadCustomFieldsListResponse"];
+export type LeadCustomFieldResponse = components["schemas"]["LeadCustomFieldResponse"];
+export type LeadCustomFieldCreateRequest = components["schemas"]["LeadCustomFieldCreateRequest"];
+export type LeadCustomFieldUpdateRequest = components["schemas"]["LeadCustomFieldUpdateRequest"];
+export type LeadUpsertRequest = components["schemas"]["LeadUpsertRequest"];
+export type LeadUpdateRequest = components["schemas"]["LeadUpdateRequest"];
+export type Space = components["schemas"]["Space"];
+export type Agent = components["schemas"]["Agent"];
+export type CallSummary = components["schemas"]["CallSummary"];
+export type Lead = components["schemas"]["Lead"];
+export type LeadCustomField = components["schemas"]["LeadCustomField"];
+
+export type CustomFieldFilterValue = string | number | boolean | { eq?: string | number | boolean; gt?: string | number; gte?: string | number; lt?: string | number; lte?: string | number; before?: string; after?: string; contains?: string };
+export type CustomFieldFilters = Record<string, CustomFieldFilterValue>;
 
 export interface ListSpacesOptions {
   limit?: number;
@@ -28,6 +38,7 @@ export interface ListCallsOptions extends ListSpacesOptions {
   agentId?: string;
   createdAfter?: string;
   createdBefore?: string;
+  leadCustomFields?: CustomFieldFilters;
 }
 
 export interface ListAgentsOptions extends ListSpacesOptions {
@@ -38,6 +49,11 @@ export interface ListLeadsOptions extends ListSpacesOptions {
   spaceId?: string;
   createdAfter?: string;
   createdBefore?: string;
+  customFields?: CustomFieldFilters;
+}
+
+export interface ListLeadCustomFieldsOptions {
+  includeArchived?: boolean;
 }
 
 export interface VueVoxResponseMetadata {
@@ -152,6 +168,26 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return apiGet<LeadDetailResponse>(`/v1/leads/${encodeURIComponent(leadId)}`);
   }
 
+  async function updateLead(leadId: string, input: LeadUpdateRequest): Promise<VueVoxApiResponse<LeadDetailResponse>> {
+    return apiJson<LeadDetailResponse>("PATCH", `/v1/leads/${encodeURIComponent(leadId)}`, input);
+  }
+
+  async function upsertLeadByExternalId(externalId: string, input: LeadUpsertRequest): Promise<VueVoxApiResponse<LeadDetailResponse>> {
+    return apiJson<LeadDetailResponse>("PUT", `/v1/leads/by-external-id/${encodeURIComponent(externalId)}`, input);
+  }
+
+  async function listLeadCustomFields(listOptions: ListLeadCustomFieldsOptions = {}): Promise<VueVoxApiResponse<LeadCustomFieldsListResponse>> {
+    return apiGet<LeadCustomFieldsListResponse>("/v1/lead-custom-fields", listOptions);
+  }
+
+  async function createLeadCustomField(input: LeadCustomFieldCreateRequest): Promise<VueVoxApiResponse<LeadCustomFieldResponse>> {
+    return apiJson<LeadCustomFieldResponse>("POST", "/v1/lead-custom-fields", input);
+  }
+
+  async function updateLeadCustomField(key: string, input: LeadCustomFieldUpdateRequest): Promise<VueVoxApiResponse<LeadCustomFieldResponse>> {
+    return apiJson<LeadCustomFieldResponse>("PATCH", `/v1/lead-custom-fields/${encodeURIComponent(key)}`, input);
+  }
+
   async function apiGet<T>(path: string, query?: object): Promise<VueVoxApiResponse<T>> {
     const accessToken = await getAccessToken();
     const result = await requestJson<T>("GET", path, {
@@ -160,6 +196,20 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         Authorization: `Bearer ${accessToken}`,
       },
       query,
+    });
+
+    return withMetadata(result.data, result.response, result.requestId);
+  }
+
+  async function apiJson<T>(method: "POST" | "PUT" | "PATCH", path: string, body: object): Promise<VueVoxApiResponse<T>> {
+    const accessToken = await getAccessToken();
+    const result = await requestJson<T>(method, path, {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
     return withMetadata(result.data, result.response, result.requestId);
@@ -181,7 +231,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         return { data: body as T, requestId, response };
       }
 
-      if (attempt < retries && shouldRetry(response.status)) {
+      if (attempt < retries && (method === "GET" || path === "/oauth/token") && shouldRetry(response.status)) {
         await sleep(retryDelayMs(attempt, retryAfter));
         continue;
       }
@@ -227,7 +277,14 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     leads: {
       list: listLeads,
       get: getLead,
+      update: updateLead,
+      upsertByExternalId: upsertLeadByExternalId,
       paginate: (listOptions: ListLeadsOptions = {}) => paginate(listLeads, listOptions),
+    },
+    leadCustomFields: {
+      list: listLeadCustomFields,
+      create: createLeadCustomField,
+      update: updateLeadCustomField,
     },
     raw,
   };
@@ -248,13 +305,34 @@ function trimTrailingSlash(value: string): string {
 function buildUrl(baseUrl: string, path: string, query: object | undefined): string {
   const url = new URL(`${baseUrl}${path}`);
 
-  for (const [key, value] of Object.entries(query ?? {})) {
-    if ((typeof value === "string" || typeof value === "number") && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  }
+  appendQueryParams(url.searchParams, query ?? {});
 
   return url.toString();
+}
+
+function appendQueryParams(searchParams: URLSearchParams, query: object, prefix?: string): void {
+  for (const [rawKey, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+
+    const key = queryKey(rawKey, prefix);
+
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      searchParams.set(key, String(value));
+      continue;
+    }
+
+    if (typeof value === "object" && !Array.isArray(value)) {
+      appendQueryParams(searchParams, value, key);
+    }
+  }
+}
+
+function queryKey(key: string, prefix?: string): string {
+  const publicKey = key === "customFields" ? "custom" : key === "leadCustomFields" ? "leadCustom" : key;
+
+  return prefix ? `${prefix}[${publicKey}]` : publicKey;
 }
 
 async function parseJson<T>(response: Response): Promise<T | null> {
@@ -352,5 +430,3 @@ function retryAfterSeconds(response: Response): number | undefined {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-export type { Agent, AgentsListResponse, CallDetailResponse, CallsListResponse, CallSummary, HelloResponse, Lead, LeadDetailResponse, LeadsListResponse, Space, SpacesListResponse };
