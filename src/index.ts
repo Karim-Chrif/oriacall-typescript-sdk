@@ -1,5 +1,7 @@
 export { createVueVoxClient } from "./client.js";
 export type {
+  Agent,
+  AgentsListResponse,
   CallDetailResponse,
   CallsListResponse,
   CallSummary,
@@ -7,6 +9,7 @@ export type {
   Lead,
   LeadDetailResponse,
   LeadsListResponse,
+  ListAgentsOptions,
   ListCallsOptions,
   ListLeadsOptions,
   ListSpacesOptions,

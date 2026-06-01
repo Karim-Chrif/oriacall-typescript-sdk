@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List organization agents
+         * @description Returns agents for the API client's organization using cursor pagination. Optionally filter agents by space ID.
+         */
+        get: operations["listAgents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/calls": {
         parameters: {
             query?: never;
@@ -155,7 +175,7 @@ export interface components {
             client_secret: string;
             /**
              * @description Space-separated scopes requested for the access token.
-             * @example hello:read spaces:read calls:read leads:read
+             * @example hello:read spaces:read agents:read calls:read leads:read
              */
             scope?: string;
         };
@@ -165,7 +185,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read spaces:read calls:read leads:read */
+            /** @example hello:read spaces:read agents:read calls:read leads:read */
             scope: string;
         };
         HelloResponse: {
@@ -186,6 +206,21 @@ export interface components {
         };
         SpacesListResponse: {
             data: components["schemas"]["Space"][];
+            pagination: components["schemas"]["CursorPagination"];
+        };
+        Agent: {
+            /** Format: uuid */
+            id: string;
+            /** @example Morgan Agent */
+            name: string;
+            spaces: components["schemas"]["ResourceSummary"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AgentsListResponse: {
+            data: components["schemas"]["Agent"][];
             pagination: components["schemas"]["CursorPagination"];
         };
         ResourceSummary: {
@@ -417,6 +452,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpacesListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Query parameters failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listAgents: {
+        parameters: {
+            query?: {
+                /** @description Number of agents to return. Defaults to 50. Maximum is 100. */
+                limit?: number;
+                /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
+                cursor?: string;
+                /** @description Filter agents assigned to a space ID. */
+                spaceId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated agents response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentsListResponse"];
                 };
             };
             /** @description Bearer token is missing, invalid, or expired. */

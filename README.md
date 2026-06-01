@@ -23,6 +23,7 @@ Available scopes:
 ```text
 hello:read
 spaces:read
+agents:read
 calls:read
 leads:read
 ```
@@ -35,7 +36,7 @@ import { createVueVoxClient } from "@vuevox/sdk";
 const vuevox = createVueVoxClient({
   clientId: process.env.VUEVOX_CLIENT_ID!,
   clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
-  scope: ["hello:read", "spaces:read", "calls:read", "leads:read"],
+  scope: ["hello:read", "spaces:read", "agents:read", "calls:read", "leads:read"],
 });
 
 const hello = await vuevox.hello.get();
@@ -43,6 +44,9 @@ console.log(hello.data.message, hello.requestId);
 
 const spaces = await vuevox.spaces.list({ limit: 50 });
 console.log(spaces.data.data, spaces.requestId);
+
+const agents = await vuevox.agents.list({ limit: 50 });
+console.log(agents.data.data, agents.requestId);
 
 const calls = await vuevox.calls.list({ limit: 50 });
 console.log(calls.data.data, calls.requestId);
@@ -138,7 +142,7 @@ for await (const call of vuevox.calls.paginate({ limit: 50 })) {
 }
 ```
 
-Pagination helpers are available for `spaces`, `calls`, and `leads`.
+Pagination helpers are available for `spaces`, `agents`, `calls`, and `leads`.
 
 ## Retries
 

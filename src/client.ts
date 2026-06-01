@@ -7,11 +7,13 @@ type TokenResponse = components["schemas"]["TokenResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
 type HelloResponse = components["schemas"]["HelloResponse"];
 type SpacesListResponse = components["schemas"]["SpacesListResponse"];
+type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 type CallsListResponse = components["schemas"]["CallsListResponse"];
 type CallDetailResponse = components["schemas"]["CallDetailResponse"];
 type LeadsListResponse = components["schemas"]["LeadsListResponse"];
 type LeadDetailResponse = components["schemas"]["LeadDetailResponse"];
 type Space = components["schemas"]["Space"];
+type Agent = components["schemas"]["Agent"];
 type CallSummary = components["schemas"]["CallSummary"];
 type Lead = components["schemas"]["Lead"];
 
@@ -26,6 +28,10 @@ export interface ListCallsOptions extends ListSpacesOptions {
   agentId?: string;
   createdAfter?: string;
   createdBefore?: string;
+}
+
+export interface ListAgentsOptions extends ListSpacesOptions {
+  spaceId?: string;
 }
 
 export interface ListLeadsOptions extends ListSpacesOptions {
@@ -126,6 +132,10 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return apiGet<SpacesListResponse>("/v1/spaces", listOptions);
   }
 
+  async function listAgents(listOptions: ListAgentsOptions = {}): Promise<VueVoxApiResponse<AgentsListResponse>> {
+    return apiGet<AgentsListResponse>("/v1/agents", listOptions);
+  }
+
   async function listCalls(listOptions: ListCallsOptions = {}): Promise<VueVoxApiResponse<CallsListResponse>> {
     return apiGet<CallsListResponse>("/v1/calls", listOptions);
   }
@@ -204,6 +214,10 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     spaces: {
       list: listSpaces,
       paginate: (listOptions: ListSpacesOptions = {}) => paginate(listSpaces, listOptions),
+    },
+    agents: {
+      list: listAgents,
+      paginate: (listOptions: ListAgentsOptions = {}) => paginate(listAgents, listOptions),
     },
     calls: {
       list: listCalls,
@@ -339,4 +353,4 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export type { CallDetailResponse, CallsListResponse, CallSummary, HelloResponse, Lead, LeadDetailResponse, LeadsListResponse, Space, SpacesListResponse };
+export type { Agent, AgentsListResponse, CallDetailResponse, CallsListResponse, CallSummary, HelloResponse, Lead, LeadDetailResponse, LeadsListResponse, Space, SpacesListResponse };
