@@ -10,6 +10,8 @@ export type SpacesListResponse = components["schemas"]["SpacesListResponse"];
 export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 export type CallsListResponse = components["schemas"]["CallsListResponse"];
 export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
+export type CallResponse = components["schemas"]["CallResponse"];
+export type CallUploadMetadata = components["schemas"]["CallUploadMetadata"];
 export type LeadsListResponse = components["schemas"]["LeadsListResponse"];
 export type LeadDetailResponse = components["schemas"]["LeadDetailResponse"];
 export type LeadCustomFieldsListResponse = components["schemas"]["LeadCustomFieldsListResponse"];
@@ -39,6 +41,19 @@ export interface ListCallsOptions extends ListSpacesOptions {
   createdAfter?: string;
   createdBefore?: string;
   leadCustomFields?: CustomFieldFilters;
+}
+
+export interface UploadCallInput extends CallUploadMetadata {
+  idempotencyKey: string;
+  audio: {
+    file: Blob;
+    filename?: string;
+  };
+}
+
+export interface WaitForAnalysisOptions {
+  intervalMs?: number;
+  timeoutMs?: number;
 }
 
 export interface ListAgentsOptions extends ListSpacesOptions {
@@ -160,6 +175,42 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return apiGet<CallDetailResponse>(`/v1/calls/${encodeURIComponent(callId)}`);
   }
 
+  async function uploadCall(input: UploadCallInput): Promise<VueVoxApiResponse<CallResponse>> {
+    const { audio, idempotencyKey, ...metadata } = input;
+    const formData = new FormData();
+    formData.set("metadata", JSON.stringify(metadata));
+    formData.set("audioFile", audio.file, audio.filename ?? "call-audio");
+
+    return apiMultipart<CallResponse>("POST", "/v1/calls", formData, {
+      "Idempotency-Key": idempotencyKey,
+    });
+  }
+
+  async function queueCallAnalysis(callId: string): Promise<VueVoxApiResponse<CallResponse>> {
+    return apiJson<CallResponse>("POST", `/v1/calls/${encodeURIComponent(callId)}/analysis-jobs`, {});
+  }
+
+  async function waitForCallAnalysis(callId: string, waitOptions: WaitForAnalysisOptions = {}): Promise<VueVoxApiResponse<CallDetailResponse>> {
+    const intervalMs = waitOptions.intervalMs ?? 2_000;
+    const timeoutMs = waitOptions.timeoutMs ?? 120_000;
+    const startedAt = Date.now();
+
+    for (;;) {
+      const response = await getCall(callId);
+      const status = response.data.data.analysisStatus;
+
+      if (status === "completed" || status === "failed") {
+        return response;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        throw new VueVoxApiError(408, "analysis_timeout", "Timed out waiting for call analysis.", undefined, response.requestId);
+      }
+
+      await sleep(intervalMs);
+    }
+  }
+
   async function listLeads(listOptions: ListLeadsOptions = {}): Promise<VueVoxApiResponse<LeadsListResponse>> {
     return apiGet<LeadsListResponse>("/v1/leads", listOptions);
   }
@@ -210,6 +261,20 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+    });
+
+    return withMetadata(result.data, result.response, result.requestId);
+  }
+
+  async function apiMultipart<T>(method: "POST", path: string, body: FormData, headers: Record<string, string>): Promise<VueVoxApiResponse<T>> {
+    const accessToken = await getAccessToken();
+    const result = await requestJson<T>(method, path, {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...headers,
+      },
+      body,
     });
 
     return withMetadata(result.data, result.response, result.requestId);
@@ -272,6 +337,9 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     calls: {
       list: listCalls,
       get: getCall,
+      upload: uploadCall,
+      queueAnalysis: queueCallAnalysis,
+      waitForAnalysis: waitForCallAnalysis,
       paginate: (listOptions: ListCallsOptions = {}) => paginate(listCalls, listOptions),
     },
     leads: {

@@ -31,6 +31,7 @@ hello:read
 spaces:read
 agents:read
 calls:read
+calls:write
 leads:read
 leads:write
 lead_custom_fields:manage
@@ -104,6 +105,9 @@ vuevox.agents.list();
 vuevox.agents.paginate();
 vuevox.calls.list();
 vuevox.calls.get("call-id");
+vuevox.calls.upload({ idempotencyKey: "crm-call-123", spaceId: "space-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
+vuevox.calls.queueAnalysis("call-id");
+vuevox.calls.waitForAnalysis("call-id");
 vuevox.calls.paginate();
 vuevox.leads.list();
 vuevox.leads.get("lead-id");
@@ -308,6 +312,106 @@ Required scope: `calls:read`.
 ```ts
 const response = await vuevox.calls.get("call-id");
 console.log(response.data.data.transcript);
+```
+
+Returns: `Promise<VueVoxApiResponse<CallDetailResponse>>`.
+
+### `vuevox.calls.upload(input)`
+
+Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call in an existing platform-managed space, and optionally queues analysis.
+
+Required scope: `calls:write`.
+
+The API requires an idempotency key for uploads. Reusing the same `idempotencyKey` with the same request returns the original response; reusing it with different metadata or audio returns an `idempotency_key_conflict` error.
+
+Spaces are managed in VueVox. Use `vuevox.spaces.list()` to obtain the `spaceId`.
+
+The maximum audio upload size is configured by a VueVox superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
+
+Options: `UploadCallInput`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `idempotencyKey` | `string` | Required unique key for safe retries. |
+| `spaceId` | `string` | Required existing VueVox space ID. |
+| `externalId` | `string \| null` | Optional call ID from your system. |
+| `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
+| `agent.externalId` | `string` | Required agent ID from your system. |
+| `agent.name` | `string` | Required when creating a new agent. |
+| `agent.email` | `string \| null` | Optional agent email. |
+| `agent.phone` | `string \| null` | Optional agent phone. |
+| `lead.externalId` | `string` | Required lead/prospect ID from your system. |
+| `lead.firstName` | `string` | Required when creating a new lead. |
+| `lead.lastName` | `string` | Required when creating a new lead. |
+| `lead.email` | `string \| null` | Optional lead email. |
+| `lead.phone` | `string \| null` | Optional lead phone. |
+| `lead.customFields` | `Record<string, unknown>` | Optional organization-defined lead custom fields. |
+| `audio.file` | `Blob` | Required audio file blob. In Node, use `new Blob([buffer], { type: "audio/mpeg" })`. |
+| `audio.filename` | `string` | Optional filename sent in multipart upload. |
+
+```ts
+import { readFile } from "node:fs/promises";
+
+const buffer = await readFile("./call.mp3");
+
+const response = await vuevox.calls.upload({
+  idempotencyKey: "crm-call-789",
+  externalId: "crm-call-789",
+  spaceId: "space-id",
+  queueAnalysis: true,
+  agent: {
+    externalId: "agent-123",
+    name: "Morgan Agent",
+  },
+  lead: {
+    externalId: "prospect-456",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    email: "ada@example.com",
+    customFields: {
+      crm_stage: "qualified",
+    },
+  },
+  audio: {
+    file: new Blob([buffer], { type: "audio/mpeg" }),
+    filename: "call.mp3",
+  },
+});
+
+console.log(response.data.data.id, response.data.data.analysisStatus, response.requestId);
+```
+
+Returns: `Promise<VueVoxApiResponse<CallResponse>>`.
+
+### `vuevox.calls.queueAnalysis(callId)`
+
+Queues analysis for a call that was uploaded with `queueAnalysis: false`.
+
+Required scope: `calls:write`.
+
+```ts
+const response = await vuevox.calls.queueAnalysis("call-id");
+console.log(response.data.data.analysisStatus, response.data.data.queueStatus);
+```
+
+Returns: `Promise<VueVoxApiResponse<CallResponse>>`.
+
+### `vuevox.calls.waitForAnalysis(callId, options?)`
+
+Polls `vuevox.calls.get(callId)` until the call analysis status is `completed` or `failed`.
+
+Required scope: `calls:read`.
+
+Options: `WaitForAnalysisOptions`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `intervalMs` | `number` | Poll interval. Defaults to `2000`. |
+| `timeoutMs` | `number` | Timeout before throwing `analysis_timeout`. Defaults to `120000`. |
+
+```ts
+const response = await vuevox.calls.waitForAnalysis("call-id", { timeoutMs: 180000 });
+console.log(response.data.data.analysis);
 ```
 
 Returns: `Promise<VueVoxApiResponse<CallDetailResponse>>`.
@@ -551,6 +655,14 @@ insufficient_scope
 rate_limited
 invalid_request
 call_not_found
+call_external_id_conflict
+analysis_already_queued
+analysis_timeout
+ai_config_missing
+evaluation_grid_missing
+audio_not_found
+idempotency_key_conflict
+idempotency_key_in_progress
 lead_not_found
 custom_field_not_found
 custom_field_conflict
@@ -608,8 +720,10 @@ import type {
   Agent,
   AgentsListResponse,
   CallDetailResponse,
+  CallResponse,
   CallsListResponse,
   CallSummary,
+  CallUploadMetadata,
   CustomFieldFilters,
   CustomFieldFilterValue,
   HelloResponse,
@@ -630,11 +744,13 @@ import type {
   ListSpacesOptions,
   Space,
   SpacesListResponse,
+  UploadCallInput,
   VueVoxApiResponse,
   VueVoxClientOptions,
   VueVoxErrorResponse,
   VueVoxResponseEvent,
   VueVoxResponseMetadata,
+  WaitForAnalysisOptions,
 } from "@vuevox/sdk";
 ```
 

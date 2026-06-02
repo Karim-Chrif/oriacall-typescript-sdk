@@ -97,7 +97,11 @@ export interface paths {
          */
         get: operations["listCalls"];
         put?: never;
-        post?: never;
+        /**
+         * Upload a call and optionally queue analysis
+         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed space, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by a VueVox superadmin and defaults to 20 MB.
+         */
+        post: operations["uploadCall"];
         delete?: never;
         options?: never;
         head?: never;
@@ -118,6 +122,26 @@ export interface paths {
         get: operations["getCall"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/calls/{callId}/analysis-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Queue analysis for a call
+         * @description Queues analysis for a previously uploaded organization call. Use this when a call was uploaded with queueAnalysis set to false.
+         */
+        post: operations["queueCallAnalysis"];
         delete?: never;
         options?: never;
         head?: never;
@@ -243,7 +267,7 @@ export interface components {
             client_secret: string;
             /**
              * @description Space-separated scopes requested for the access token.
-             * @example hello:read spaces:read agents:read calls:read leads:read leads:write lead_custom_fields:manage
+             * @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage
              */
             scope?: string;
         };
@@ -253,7 +277,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read spaces:read agents:read calls:read leads:read leads:write lead_custom_fields:manage */
+            /** @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage */
             scope: string;
         };
         HelloResponse: {
@@ -317,6 +341,8 @@ export interface components {
         CallSummary: {
             /** Format: uuid */
             id: string;
+            /** @description Optional ID from an external system. */
+            externalId: string | null;
             space: components["schemas"]["ResourceSummary"];
             lead: components["schemas"]["LeadSummary"];
             agent: components["schemas"]["AgentSummary"];
@@ -356,6 +382,44 @@ export interface components {
         };
         CallDetailResponse: {
             data: components["schemas"]["CallDetail"];
+        };
+        CallResponse: {
+            data: components["schemas"]["CallSummary"];
+        };
+        CallUploadMetadata: {
+            /** @description Optional call ID from your system. Must be unique within the organization when provided. */
+            externalId?: string | null;
+            /**
+             * Format: uuid
+             * @description Existing VueVox space ID. Spaces are managed in the VueVox platform.
+             */
+            spaceId: string;
+            /**
+             * @description When true or omitted, queues analysis immediately after upload. When false, queue later with queueCallAnalysis.
+             * @default true
+             */
+            queueAnalysis: boolean;
+            agent: components["schemas"]["CallUploadAgent"];
+            lead: components["schemas"]["CallUploadLead"];
+        };
+        CallUploadAgent: {
+            externalId: string;
+            /** @description Required when creating a new agent. */
+            name?: string;
+            /** Format: email */
+            email?: string | null;
+            phone?: string | null;
+        };
+        CallUploadLead: {
+            externalId: string;
+            /** @description Required when creating a new lead. */
+            firstName?: string;
+            /** @description Required when creating a new lead. */
+            lastName?: string;
+            /** Format: email */
+            email?: string | null;
+            phone?: string | null;
+            customFields?: components["schemas"]["CustomFields"];
         };
         Lead: {
             /** Format: uuid */
@@ -789,6 +853,77 @@ export interface operations {
             };
         };
     };
+    uploadCall: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key for this upload attempt. Reusing the same key with the same request returns the original response; reusing it with a different request returns a conflict. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** @description JSON string matching CallUploadMetadata. */
+                    metadata: string;
+                    /**
+                     * Format: binary
+                     * @description Audio file. Supported extensions include wav, mp3, aac, m4a, amr, mpeg, mpga, x-wav, ogg, oga, mp4, and mp4a.
+                     */
+                    audioFile: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Call uploaded. Analysis is queued when metadata.queueAnalysis is true. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Idempotency key conflict, external call ID conflict, or analysis already queued. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Multipart upload or metadata failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getCall: {
         parameters: {
             query?: never;
@@ -844,6 +979,74 @@ export interface operations {
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
                     "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    queueCallAnalysis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Call ID. */
+                callId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Analysis queued. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Call was not found in the API client's organization. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Analysis is already queued or processing. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Organization AI settings, evaluation grid, or audio file is missing. */
+            422: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {

@@ -3,8 +3,10 @@ export type {
   Agent,
   AgentsListResponse,
   CallDetailResponse,
+  CallResponse,
   CallsListResponse,
   CallSummary,
+  CallUploadMetadata,
   CustomFieldFilters,
   CustomFieldFilterValue,
   HelloResponse,
@@ -25,10 +27,12 @@ export type {
   ListSpacesOptions,
   Space,
   SpacesListResponse,
+  UploadCallInput,
   VueVoxApiResponse,
   VueVoxClientOptions,
   VueVoxResponseEvent,
   VueVoxResponseMetadata,
+  WaitForAnalysisOptions,
 } from "./client.js";
 export { VueVoxApiError } from "./errors.js";
 export type { VueVoxErrorResponse } from "./errors.js";
