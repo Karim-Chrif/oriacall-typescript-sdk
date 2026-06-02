@@ -1,26 +1,26 @@
 import type { components } from "./generated/schema.js";
 
-export type VueVoxErrorResponse = components["schemas"]["ErrorResponse"];
+export type OriacallErrorResponse = components["schemas"]["ErrorResponse"];
 
-export class VueVoxApiError extends Error {
+export class OriacallApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly details?: Record<string, unknown>;
   readonly isRateLimited: boolean;
   readonly requestId?: string;
   readonly retryAfter?: number;
-  readonly response?: VueVoxErrorResponse;
+  readonly response?: OriacallErrorResponse;
 
   constructor(
     status: number,
     code: string,
     message: string,
-    response?: VueVoxErrorResponse,
+    response?: OriacallErrorResponse,
     requestId?: string,
     retryAfter?: number,
   ) {
     super(message);
-    this.name = "VueVoxApiError";
+    this.name = "OriacallApiError";
     this.status = status;
     this.code = code;
     this.details = response?.error.details;

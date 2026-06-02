@@ -1,6 +1,6 @@
 import createClient from "openapi-fetch";
 
-import { VueVoxApiError } from "./errors.js";
+import { OriacallApiError } from "./errors.js";
 import type { components, paths } from "./generated/schema.js";
 
 type TokenResponse = components["schemas"]["TokenResponse"];
@@ -91,28 +91,28 @@ export interface VerifyWebhookSignatureInput {
   now?: number;
 }
 
-export interface VueVoxResponseMetadata {
+export interface OriacallResponseMetadata {
   requestId?: string;
   status: number;
 }
 
-export interface VueVoxApiResponse<T> extends VueVoxResponseMetadata {
+export interface OriacallApiResponse<T> extends OriacallResponseMetadata {
   data: T;
 }
 
-export interface VueVoxResponseEvent extends VueVoxResponseMetadata {
+export interface OriacallResponseEvent extends OriacallResponseMetadata {
   method: string;
   path: string;
   retryAfter?: number;
 }
 
-export interface VueVoxClientOptions {
+export interface OriacallClientOptions {
   baseUrl?: string;
   clientId: string;
   clientSecret: string;
   scope?: string | string[];
   fetch?: typeof fetch;
-  onResponse?: (event: VueVoxResponseEvent) => void;
+  onResponse?: (event: OriacallResponseEvent) => void;
   retries?: number;
   retryBaseDelayMs?: number;
   retryMaxDelayMs?: number;
@@ -136,10 +136,10 @@ interface PaginatedResponse<T> {
   };
 }
 
-type ListFunction<TItem, TOptions extends ListSpacesOptions> = (options?: TOptions) => Promise<VueVoxApiResponse<PaginatedResponse<TItem>>>;
+type ListFunction<TItem, TOptions extends ListSpacesOptions> = (options?: TOptions) => Promise<OriacallApiResponse<PaginatedResponse<TItem>>>;
 
-export function createVueVoxClient(options: VueVoxClientOptions) {
-  const baseUrl = trimTrailingSlash(options.baseUrl ?? "https://api.vuevox.com");
+export function createOriacallClient(options: OriacallClientOptions) {
+  const baseUrl = trimTrailingSlash(options.baseUrl ?? "https://api.oriacall.com");
   const fetchFn = options.fetch ?? fetch;
   const raw = createClient<paths>({ baseUrl, fetch: fetchFn });
   const retries = options.retries ?? 0;
@@ -175,27 +175,27 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return cachedToken.accessToken;
   }
 
-  async function getHello(): Promise<VueVoxApiResponse<HelloResponse>> {
+  async function getHello(): Promise<OriacallApiResponse<HelloResponse>> {
     return apiGet<HelloResponse>("/v1/hello");
   }
 
-  async function listSpaces(listOptions: ListSpacesOptions = {}): Promise<VueVoxApiResponse<SpacesListResponse>> {
+  async function listSpaces(listOptions: ListSpacesOptions = {}): Promise<OriacallApiResponse<SpacesListResponse>> {
     return apiGet<SpacesListResponse>("/v1/spaces", listOptions);
   }
 
-  async function listAgents(listOptions: ListAgentsOptions = {}): Promise<VueVoxApiResponse<AgentsListResponse>> {
+  async function listAgents(listOptions: ListAgentsOptions = {}): Promise<OriacallApiResponse<AgentsListResponse>> {
     return apiGet<AgentsListResponse>("/v1/agents", listOptions);
   }
 
-  async function listCalls(listOptions: ListCallsOptions = {}): Promise<VueVoxApiResponse<CallsListResponse>> {
+  async function listCalls(listOptions: ListCallsOptions = {}): Promise<OriacallApiResponse<CallsListResponse>> {
     return apiGet<CallsListResponse>("/v1/calls", listOptions);
   }
 
-  async function getCall(callId: string): Promise<VueVoxApiResponse<CallDetailResponse>> {
+  async function getCall(callId: string): Promise<OriacallApiResponse<CallDetailResponse>> {
     return apiGet<CallDetailResponse>(`/v1/calls/${encodeURIComponent(callId)}`);
   }
 
-  async function uploadCall(input: UploadCallInput): Promise<VueVoxApiResponse<CallResponse>> {
+  async function uploadCall(input: UploadCallInput): Promise<OriacallApiResponse<CallResponse>> {
     const { audio, idempotencyKey, ...metadata } = input;
     const formData = new FormData();
     formData.set("metadata", JSON.stringify(metadata));
@@ -206,11 +206,11 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     });
   }
 
-  async function queueCallAnalysis(callId: string): Promise<VueVoxApiResponse<CallResponse>> {
+  async function queueCallAnalysis(callId: string): Promise<OriacallApiResponse<CallResponse>> {
     return apiJson<CallResponse>("POST", `/v1/calls/${encodeURIComponent(callId)}/analysis-jobs`, {});
   }
 
-  async function waitForCallAnalysis(callId: string, waitOptions: WaitForAnalysisOptions = {}): Promise<VueVoxApiResponse<CallDetailResponse>> {
+  async function waitForCallAnalysis(callId: string, waitOptions: WaitForAnalysisOptions = {}): Promise<OriacallApiResponse<CallDetailResponse>> {
     const intervalMs = waitOptions.intervalMs ?? 2_000;
     const timeoutMs = waitOptions.timeoutMs ?? 120_000;
     const startedAt = Date.now();
@@ -224,66 +224,66 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
       }
 
       if (Date.now() - startedAt >= timeoutMs) {
-        throw new VueVoxApiError(408, "analysis_timeout", "Timed out waiting for call analysis.", undefined, response.requestId);
+        throw new OriacallApiError(408, "analysis_timeout", "Timed out waiting for call analysis.", undefined, response.requestId);
       }
 
       await sleep(intervalMs);
     }
   }
 
-  async function listLeads(listOptions: ListLeadsOptions = {}): Promise<VueVoxApiResponse<LeadsListResponse>> {
+  async function listLeads(listOptions: ListLeadsOptions = {}): Promise<OriacallApiResponse<LeadsListResponse>> {
     return apiGet<LeadsListResponse>("/v1/leads", listOptions);
   }
 
-  async function getLead(leadId: string): Promise<VueVoxApiResponse<LeadDetailResponse>> {
+  async function getLead(leadId: string): Promise<OriacallApiResponse<LeadDetailResponse>> {
     return apiGet<LeadDetailResponse>(`/v1/leads/${encodeURIComponent(leadId)}`);
   }
 
-  async function updateLead(leadId: string, input: LeadUpdateRequest): Promise<VueVoxApiResponse<LeadDetailResponse>> {
+  async function updateLead(leadId: string, input: LeadUpdateRequest): Promise<OriacallApiResponse<LeadDetailResponse>> {
     return apiJson<LeadDetailResponse>("PATCH", `/v1/leads/${encodeURIComponent(leadId)}`, input);
   }
 
-  async function upsertLeadByExternalId(externalId: string, input: LeadUpsertRequest): Promise<VueVoxApiResponse<LeadDetailResponse>> {
+  async function upsertLeadByExternalId(externalId: string, input: LeadUpsertRequest): Promise<OriacallApiResponse<LeadDetailResponse>> {
     return apiJson<LeadDetailResponse>("PUT", `/v1/leads/by-external-id/${encodeURIComponent(externalId)}`, input);
   }
 
-  async function listLeadCustomFields(listOptions: ListLeadCustomFieldsOptions = {}): Promise<VueVoxApiResponse<LeadCustomFieldsListResponse>> {
+  async function listLeadCustomFields(listOptions: ListLeadCustomFieldsOptions = {}): Promise<OriacallApiResponse<LeadCustomFieldsListResponse>> {
     return apiGet<LeadCustomFieldsListResponse>("/v1/lead-custom-fields", listOptions);
   }
 
-  async function createLeadCustomField(input: LeadCustomFieldCreateRequest): Promise<VueVoxApiResponse<LeadCustomFieldResponse>> {
+  async function createLeadCustomField(input: LeadCustomFieldCreateRequest): Promise<OriacallApiResponse<LeadCustomFieldResponse>> {
     return apiJson<LeadCustomFieldResponse>("POST", "/v1/lead-custom-fields", input);
   }
 
-  async function updateLeadCustomField(key: string, input: LeadCustomFieldUpdateRequest): Promise<VueVoxApiResponse<LeadCustomFieldResponse>> {
+  async function updateLeadCustomField(key: string, input: LeadCustomFieldUpdateRequest): Promise<OriacallApiResponse<LeadCustomFieldResponse>> {
     return apiJson<LeadCustomFieldResponse>("PATCH", `/v1/lead-custom-fields/${encodeURIComponent(key)}`, input);
   }
 
-  async function listWebhookEndpoints(listOptions: ListWebhookEndpointsOptions = {}): Promise<VueVoxApiResponse<WebhookEndpointsListResponse>> {
+  async function listWebhookEndpoints(listOptions: ListWebhookEndpointsOptions = {}): Promise<OriacallApiResponse<WebhookEndpointsListResponse>> {
     return apiGet<WebhookEndpointsListResponse>("/v1/webhooks/endpoints", listOptions);
   }
 
-  async function createWebhookEndpoint(input: WebhookEndpointCreateRequest): Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>> {
+  async function createWebhookEndpoint(input: WebhookEndpointCreateRequest): Promise<OriacallApiResponse<WebhookEndpointSecretResponse>> {
     return apiJson<WebhookEndpointSecretResponse>("POST", "/v1/webhooks/endpoints", input);
   }
 
-  async function updateWebhookEndpoint(endpointId: string, input: WebhookEndpointUpdateRequest): Promise<VueVoxApiResponse<WebhookEndpointResponse>> {
+  async function updateWebhookEndpoint(endpointId: string, input: WebhookEndpointUpdateRequest): Promise<OriacallApiResponse<WebhookEndpointResponse>> {
     return apiJson<WebhookEndpointResponse>("PATCH", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}`, input);
   }
 
-  async function deleteWebhookEndpoint(endpointId: string): Promise<VueVoxApiResponse<null>> {
+  async function deleteWebhookEndpoint(endpointId: string): Promise<OriacallApiResponse<null>> {
     return apiDelete(`/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}`);
   }
 
-  async function rotateWebhookEndpointSecret(endpointId: string): Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>> {
+  async function rotateWebhookEndpointSecret(endpointId: string): Promise<OriacallApiResponse<WebhookEndpointSecretResponse>> {
     return apiJson<WebhookEndpointSecretResponse>("POST", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}/rotate-secret`, {});
   }
 
-  async function testWebhookEndpoint(endpointId: string): Promise<VueVoxApiResponse<WebhookTestResponse>> {
+  async function testWebhookEndpoint(endpointId: string): Promise<OriacallApiResponse<WebhookTestResponse>> {
     return apiJson<WebhookTestResponse>("POST", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}/test`, {});
   }
 
-  async function apiGet<T>(path: string, query?: object): Promise<VueVoxApiResponse<T>> {
+  async function apiGet<T>(path: string, query?: object): Promise<OriacallApiResponse<T>> {
     const accessToken = await getAccessToken();
     const result = await requestJson<T>("GET", path, {
       method: "GET",
@@ -296,7 +296,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return withMetadata(result.data, result.response, result.requestId);
   }
 
-  async function apiJson<T>(method: "POST" | "PUT" | "PATCH", path: string, body: object): Promise<VueVoxApiResponse<T>> {
+  async function apiJson<T>(method: "POST" | "PUT" | "PATCH", path: string, body: object): Promise<OriacallApiResponse<T>> {
     const accessToken = await getAccessToken();
     const result = await requestJson<T>(method, path, {
       method,
@@ -310,7 +310,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return withMetadata(result.data, result.response, result.requestId);
   }
 
-  async function apiDelete(path: string): Promise<VueVoxApiResponse<null>> {
+  async function apiDelete(path: string): Promise<OriacallApiResponse<null>> {
     const accessToken = await getAccessToken();
     const response = await fetchFn(buildUrl(baseUrl, path, undefined), {
       method: "DELETE",
@@ -328,17 +328,17 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     }
 
     const error = isErrorResponse(body) ? body.error : null;
-    throw new VueVoxApiError(
+    throw new OriacallApiError(
       response.status,
       error?.code ?? "api_request_failed",
-      error?.message ?? "VueVox API request failed.",
+      error?.message ?? "Oriacall API request failed.",
       isErrorResponse(body) ? body : undefined,
       requestId,
       retryAfter,
     );
   }
 
-  async function apiMultipart<T>(method: "POST", path: string, body: FormData, headers: Record<string, string>): Promise<VueVoxApiResponse<T>> {
+  async function apiMultipart<T>(method: "POST", path: string, body: FormData, headers: Record<string, string>): Promise<OriacallApiResponse<T>> {
     const accessToken = await getAccessToken();
     const result = await requestJson<T>(method, path, {
       method,
@@ -362,7 +362,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
 
       if (response.ok) {
         if (body === null || isErrorResponse(body)) {
-          throw new VueVoxApiError(response.status, "invalid_response", "VueVox returned an invalid response.", undefined, requestId, retryAfter);
+          throw new OriacallApiError(response.status, "invalid_response", "Oriacall returned an invalid response.", undefined, requestId, retryAfter);
         }
 
         return { data: body as T, requestId, response };
@@ -374,10 +374,10 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
       }
 
       const error = isErrorResponse(body) ? body.error : null;
-      throw new VueVoxApiError(
+      throw new OriacallApiError(
         response.status,
         error?.code ?? "api_request_failed",
-        error?.message ?? "VueVox API request failed.",
+        error?.message ?? "Oriacall API request failed.",
         isErrorResponse(body) ? body : undefined,
         requestId,
         retryAfter,
@@ -441,7 +441,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
   };
 }
 
-export async function verifyVueVoxWebhookSignature(input: VerifyWebhookSignatureInput): Promise<boolean> {
+export async function verifyOriacallWebhookSignature(input: VerifyWebhookSignatureInput): Promise<boolean> {
   const toleranceSeconds = input.toleranceSeconds ?? 300;
   const now = input.now ?? Date.now();
   const timestampSeconds = Number(input.timestamp);
@@ -533,7 +533,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function withMetadata<T>(data: T, response: Response, requestId: string | undefined): VueVoxApiResponse<T> {
+function withMetadata<T>(data: T, response: Response, requestId: string | undefined): OriacallApiResponse<T> {
   return {
     data,
     requestId,
@@ -550,7 +550,7 @@ function toUploadBlob(file: Blob | ArrayBuffer | Uint8Array, contentType?: strin
 }
 
 function notifyResponse(
-  options: VueVoxClientOptions,
+  options: OriacallClientOptions,
   method: string,
   path: string,
   response: Response,

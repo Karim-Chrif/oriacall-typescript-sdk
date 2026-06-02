@@ -99,7 +99,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a call and optionally queue analysis
-         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed space, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by a VueVox superadmin and defaults to 20 MB.
+         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed space, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by an Oriacall superadmin and defaults to 20 MB.
          */
         post: operations["uploadCall"];
         delete?: never;
@@ -473,7 +473,7 @@ export interface components {
             externalId?: string | null;
             /**
              * Format: uuid
-             * @description Existing VueVox space ID. Spaces are managed in the VueVox platform.
+             * @description Existing Oriacall space ID. Spaces are managed in the Oriacall platform.
              */
             spaceId: string;
             /**

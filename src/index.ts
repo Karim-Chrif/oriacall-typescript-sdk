@@ -1,4 +1,4 @@
-export { createVueVoxClient, verifyVueVoxWebhookSignature } from "./client.js";
+export { createOriacallClient, verifyOriacallWebhookSignature } from "./client.js";
 export type {
   Agent,
   AgentsListResponse,
@@ -30,10 +30,10 @@ export type {
   SpacesListResponse,
   UploadCallInput,
   VerifyWebhookSignatureInput,
-  VueVoxApiResponse,
-  VueVoxClientOptions,
-  VueVoxResponseEvent,
-  VueVoxResponseMetadata,
+  OriacallApiResponse,
+  OriacallClientOptions,
+  OriacallResponseEvent,
+  OriacallResponseMetadata,
   WaitForAnalysisOptions,
   WebhookEndpoint,
   WebhookEndpointCreateRequest,
@@ -44,5 +44,5 @@ export type {
   WebhookEventPayload,
   WebhookTestResponse,
 } from "./client.js";
-export { VueVoxApiError } from "./errors.js";
-export type { VueVoxErrorResponse } from "./errors.js";
+export { OriacallApiError } from "./errors.js";
+export type { OriacallErrorResponse } from "./errors.js";

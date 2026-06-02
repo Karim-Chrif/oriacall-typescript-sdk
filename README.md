@@ -1,28 +1,28 @@
-# @vuevox/sdk
+# @oriacall/sdk
 
-TypeScript SDK for the VueVox Developer API.
+TypeScript SDK for the Oriacall Developer API.
 
 ## Install
 
 ```bash
-npm install @vuevox/sdk
+npm install @oriacall/sdk
 ```
 
 Requirements:
 
 - Node.js 18 or newer.
-- A VueVox Developer API client ID and secret.
+- An Oriacall Developer API client ID and secret.
 - Server-side usage only. Do not expose `clientSecret` in browser code.
 
 ## Create API Credentials
 
-In VueVox, open:
+In Oriacall, open:
 
 ```text
 Settings -> Developer API -> Manage API Clients
 ```
 
-Create a client, select the scopes it can request, and copy the `client_secret` immediately. VueVox shows each client secret only once.
+Create a client, select the scopes it can request, and copy the `client_secret` immediately. Oriacall shows each client secret only once.
 
 Available scopes:
 
@@ -44,18 +44,18 @@ The token request can only request scopes that were granted to that API client.
 ## Quickstart
 
 ```ts
-import { createVueVoxClient } from "@vuevox/sdk";
+import { createOriacallClient } from "@oriacall/sdk";
 
-const vuevox = createVueVoxClient({
-  clientId: process.env.VUEVOX_CLIENT_ID!,
-  clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
+const oriacall = createOriacallClient({
+  clientId: process.env.ORIACALL_CLIENT_ID!,
+  clientSecret: process.env.ORIACALL_CLIENT_SECRET!,
   scope: ["hello:read", "spaces:read", "agents:read", "calls:read", "leads:read"],
 });
 
-const hello = await vuevox.hello.get();
+const hello = await oriacall.hello.get();
 console.log(hello.data.message, hello.requestId);
 
-const calls = await vuevox.calls.list({ limit: 50 });
+const calls = await oriacall.calls.list({ limit: 50 });
 console.log(calls.data.data, calls.requestId);
 ```
 
@@ -63,15 +63,15 @@ The SDK requests and caches a short-lived access token using client credentials,
 
 ## Client Reference
 
-### `createVueVoxClient(options)`
+### `createOriacallClient(options)`
 
-Creates a VueVox API client.
+Creates an Oriacall API client.
 
 ```ts
-const vuevox = createVueVoxClient({
-  baseUrl: "https://api.vuevox.com",
-  clientId: process.env.VUEVOX_CLIENT_ID!,
-  clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
+const oriacall = createOriacallClient({
+  baseUrl: "https://api.oriacall.com",
+  clientId: process.env.ORIACALL_CLIENT_ID!,
+  clientSecret: process.env.ORIACALL_CLIENT_SECRET!,
   scope: ["calls:read"],
   retries: 2,
   retryBaseDelayMs: 250,
@@ -88,10 +88,10 @@ Options:
 | --- | --- | --- | --- |
 | `clientId` | `string` | Yes | Developer API client ID. |
 | `clientSecret` | `string` | Yes | Developer API client secret. Keep this server-side. |
-| `baseUrl` | `string` | No | API base URL. Defaults to `https://api.vuevox.com`. |
+| `baseUrl` | `string` | No | API base URL. Defaults to `https://api.oriacall.com`. |
 | `scope` | `string \| string[]` | No | Space-separated string or array of requested token scopes. If omitted, the token request uses all scopes granted to the client. |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation. Defaults to global `fetch`. |
-| `onResponse` | `(event: VueVoxResponseEvent) => void` | No | Called for every SDK-managed HTTP response, including token requests. |
+| `onResponse` | `(event: OriacallResponseEvent) => void` | No | Called for every SDK-managed HTTP response, including token requests. |
 | `retries` | `number` | No | Retry count for token requests and GET endpoints. Defaults to `0`. |
 | `retryBaseDelayMs` | `number` | No | Initial retry delay. Defaults to `250`. |
 | `retryMaxDelayMs` | `number` | No | Maximum retry delay. Defaults to `2000`. |
@@ -99,33 +99,33 @@ Options:
 Returns a namespaced client:
 
 ```ts
-vuevox.getAccessToken();
-vuevox.hello.get();
-vuevox.spaces.list();
-vuevox.spaces.paginate();
-vuevox.agents.list();
-vuevox.agents.paginate();
-vuevox.calls.list();
-vuevox.calls.get("call-id");
-vuevox.calls.upload({ idempotencyKey: "crm-call-123", spaceId: "space-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
-vuevox.calls.queueAnalysis("call-id");
-vuevox.calls.waitForAnalysis("call-id");
-vuevox.calls.paginate();
-vuevox.leads.list();
-vuevox.leads.get("lead-id");
-vuevox.leads.update("lead-id", { customFields: { crm_stage: "qualified" } });
-vuevox.leads.upsertByExternalId("crm-lead-id", { firstName: "Ada", lastName: "Lovelace" });
-vuevox.leads.paginate();
-vuevox.leadCustomFields.list();
-vuevox.leadCustomFields.create({ key: "crm_stage", label: "CRM Stage", type: "select", options: ["new", "qualified"] });
-vuevox.leadCustomFields.update("crm_stage", { label: "CRM Stage" });
-vuevox.webhooks.endpoints.list();
-vuevox.webhooks.endpoints.create({ url: "https://example.com/vuevox/webhooks", events: ["analysis.completed", "analysis.failed"] });
-vuevox.webhooks.endpoints.update("endpoint-id", { isActive: false });
-vuevox.webhooks.endpoints.rotateSecret("endpoint-id");
-vuevox.webhooks.endpoints.test("endpoint-id");
-vuevox.webhooks.endpoints.delete("endpoint-id");
-vuevox.raw.GET("/v1/hello", { headers: { Authorization: `Bearer ${await vuevox.getAccessToken()}` } });
+oriacall.getAccessToken();
+oriacall.hello.get();
+oriacall.spaces.list();
+oriacall.spaces.paginate();
+oriacall.agents.list();
+oriacall.agents.paginate();
+oriacall.calls.list();
+oriacall.calls.get("call-id");
+oriacall.calls.upload({ idempotencyKey: "crm-call-123", spaceId: "space-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
+oriacall.calls.queueAnalysis("call-id");
+oriacall.calls.waitForAnalysis("call-id");
+oriacall.calls.paginate();
+oriacall.leads.list();
+oriacall.leads.get("lead-id");
+oriacall.leads.update("lead-id", { customFields: { crm_stage: "qualified" } });
+oriacall.leads.upsertByExternalId("crm-lead-id", { firstName: "Ada", lastName: "Lovelace" });
+oriacall.leads.paginate();
+oriacall.leadCustomFields.list();
+oriacall.leadCustomFields.create({ key: "crm_stage", label: "CRM Stage", type: "select", options: ["new", "qualified"] });
+oriacall.leadCustomFields.update("crm_stage", { label: "CRM Stage" });
+oriacall.webhooks.endpoints.list();
+oriacall.webhooks.endpoints.create({ url: "https://example.com/oriacall/webhooks", events: ["analysis.completed", "analysis.failed"] });
+oriacall.webhooks.endpoints.update("endpoint-id", { isActive: false });
+oriacall.webhooks.endpoints.rotateSecret("endpoint-id");
+oriacall.webhooks.endpoints.test("endpoint-id");
+oriacall.webhooks.endpoints.delete("endpoint-id");
+oriacall.raw.GET("/v1/hello", { headers: { Authorization: `Bearer ${await oriacall.getAccessToken()}` } });
 ```
 
 ## Response Envelope
@@ -133,7 +133,7 @@ vuevox.raw.GET("/v1/hello", { headers: { Authorization: `Bearer ${await vuevox.g
 All SDK endpoint methods return a response envelope:
 
 ```ts
-type VueVoxApiResponse<T> = {
+type OriacallApiResponse<T> = {
   data: T;
   status: number;
   requestId?: string;
@@ -147,10 +147,10 @@ Use `requestId` in logs and support requests. It maps to the API `X-Request-Id` 
 List endpoints use cursor pagination.
 
 ```ts
-const firstPage = await vuevox.calls.list({ limit: 50 });
+const firstPage = await oriacall.calls.list({ limit: 50 });
 
 if (firstPage.data.pagination.nextCursor) {
-  const secondPage = await vuevox.calls.list({
+  const secondPage = await oriacall.calls.list({
     limit: 50,
     cursor: firstPage.data.pagination.nextCursor,
   });
@@ -167,7 +167,7 @@ List option fields shared by paginated endpoints:
 The SDK also includes async iterable helpers:
 
 ```ts
-for await (const call of vuevox.calls.paginate({ limit: 50 })) {
+for await (const call of oriacall.calls.paginate({ limit: 50 })) {
   console.log(call.id);
 }
 ```
@@ -176,30 +176,30 @@ Pagination helpers are available for `spaces`, `agents`, `calls`, `leads`, and `
 
 ## Methods
 
-### `vuevox.getAccessToken()`
+### `oriacall.getAccessToken()`
 
 Requests or returns a cached bearer token.
 
 ```ts
-const token = await vuevox.getAccessToken();
+const token = await oriacall.getAccessToken();
 ```
 
 Returns: `Promise<string>`.
 
-### `vuevox.hello.get()`
+### `oriacall.hello.get()`
 
 Checks credentials and connectivity.
 
 Required scope: `hello:read`.
 
 ```ts
-const response = await vuevox.hello.get();
+const response = await oriacall.hello.get();
 console.log(response.data.message);
 ```
 
-Returns: `Promise<VueVoxApiResponse<HelloResponse>>`.
+Returns: `Promise<OriacallApiResponse<HelloResponse>>`.
 
-### `vuevox.spaces.list(options?)`
+### `oriacall.spaces.list(options?)`
 
 Lists organization spaces.
 
@@ -208,16 +208,16 @@ Required scope: `spaces:read`.
 Options: `ListSpacesOptions`
 
 ```ts
-const response = await vuevox.spaces.list({ limit: 50 });
+const response = await oriacall.spaces.list({ limit: 50 });
 
 for (const space of response.data.data) {
   console.log(space.id, space.name);
 }
 ```
 
-Returns: `Promise<VueVoxApiResponse<SpacesListResponse>>`.
+Returns: `Promise<OriacallApiResponse<SpacesListResponse>>`.
 
-### `vuevox.spaces.paginate(options?)`
+### `oriacall.spaces.paginate(options?)`
 
 Iterates organization spaces across all pages.
 
@@ -226,14 +226,14 @@ Required scope: `spaces:read`.
 Options: `ListSpacesOptions`
 
 ```ts
-for await (const space of vuevox.spaces.paginate({ limit: 100 })) {
+for await (const space of oriacall.spaces.paginate({ limit: 100 })) {
   console.log(space.id, space.name);
 }
 ```
 
 Returns: `AsyncGenerator<Space>`.
 
-### `vuevox.agents.list(options?)`
+### `oriacall.agents.list(options?)`
 
 Lists organization agents.
 
@@ -250,16 +250,16 @@ Options: `ListAgentsOptions`
 | `spaceId` | `string` | Optional space ID filter. |
 
 ```ts
-const response = await vuevox.agents.list({ limit: 50, spaceId: "space-id" });
+const response = await oriacall.agents.list({ limit: 50, spaceId: "space-id" });
 
 for (const agent of response.data.data) {
   console.log(agent.id, agent.externalId, agent.name);
 }
 ```
 
-Returns: `Promise<VueVoxApiResponse<AgentsListResponse>>`.
+Returns: `Promise<OriacallApiResponse<AgentsListResponse>>`.
 
-### `vuevox.agents.paginate(options?)`
+### `oriacall.agents.paginate(options?)`
 
 Iterates organization agents across all pages.
 
@@ -268,14 +268,14 @@ Required scope: `agents:read`.
 Options: `ListAgentsOptions`
 
 ```ts
-for await (const agent of vuevox.agents.paginate({ spaceId: "space-id" })) {
+for await (const agent of oriacall.agents.paginate({ spaceId: "space-id" })) {
   console.log(agent.id, agent.externalId, agent.name);
 }
 ```
 
 Returns: `AsyncGenerator<Agent>`.
 
-### `vuevox.calls.list(options?)`
+### `oriacall.calls.list(options?)`
 
 Lists organization calls. List responses do not include transcripts.
 
@@ -295,7 +295,7 @@ Options: `ListCallsOptions`
 | `leadCustomFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields attached to calls. |
 
 ```ts
-const response = await vuevox.calls.list({
+const response = await oriacall.calls.list({
   limit: 50,
   spaceId: "space-id",
   createdAfter: "2026-01-01T00:00:00.000Z",
@@ -309,22 +309,22 @@ for (const call of response.data.data) {
 }
 ```
 
-Returns: `Promise<VueVoxApiResponse<CallsListResponse>>`.
+Returns: `Promise<OriacallApiResponse<CallsListResponse>>`.
 
-### `vuevox.calls.get(callId)`
+### `oriacall.calls.get(callId)`
 
 Gets a call detail record, including transcript data when available.
 
 Required scope: `calls:read`.
 
 ```ts
-const response = await vuevox.calls.get("call-id");
+const response = await oriacall.calls.get("call-id");
 console.log(response.data.data.transcript);
 ```
 
-Returns: `Promise<VueVoxApiResponse<CallDetailResponse>>`.
+Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
 
-### `vuevox.calls.upload(input)`
+### `oriacall.calls.upload(input)`
 
 Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call in an existing platform-managed space, and optionally queues analysis.
 
@@ -332,16 +332,16 @@ Required scope: `calls:write`.
 
 The API requires an idempotency key for uploads. Reusing the same `idempotencyKey` with the same request returns the original response; reusing it with different metadata or audio returns an `idempotency_key_conflict` error.
 
-Spaces are managed in VueVox. Use `vuevox.spaces.list()` to obtain the `spaceId`.
+Spaces are managed in Oriacall. Use `oriacall.spaces.list()` to obtain the `spaceId`.
 
-The maximum audio upload size is configured by a VueVox superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
+The maximum audio upload size is configured by an Oriacall superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
 
 Options: `UploadCallInput`
 
 | Option | Type | Description |
 | --- | --- | --- |
 | `idempotencyKey` | `string` | Required unique key for safe retries. |
-| `spaceId` | `string` | Required existing VueVox space ID. |
+| `spaceId` | `string` | Required existing Oriacall space ID. |
 | `externalId` | `string \| null` | Optional call ID from your system. |
 | `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
 | `agent.externalId` | `string` | Required agent ID from your system. |
@@ -363,7 +363,7 @@ import { readFile } from "node:fs/promises";
 
 const buffer = await readFile("./call.mp3");
 
-const response = await vuevox.calls.upload({
+const response = await oriacall.calls.upload({
   idempotencyKey: "crm-call-789",
   externalId: "crm-call-789",
   spaceId: "space-id",
@@ -391,24 +391,24 @@ const response = await vuevox.calls.upload({
 console.log(response.data.data.id, response.data.data.analysisStatus, response.requestId);
 ```
 
-Returns: `Promise<VueVoxApiResponse<CallResponse>>`.
+Returns: `Promise<OriacallApiResponse<CallResponse>>`.
 
-### `vuevox.calls.queueAnalysis(callId)`
+### `oriacall.calls.queueAnalysis(callId)`
 
 Queues analysis for a call that was uploaded with `queueAnalysis: false`.
 
 Required scope: `calls:write`.
 
 ```ts
-const response = await vuevox.calls.queueAnalysis("call-id");
+const response = await oriacall.calls.queueAnalysis("call-id");
 console.log(response.data.data.analysisStatus, response.data.data.queueStatus);
 ```
 
-Returns: `Promise<VueVoxApiResponse<CallResponse>>`.
+Returns: `Promise<OriacallApiResponse<CallResponse>>`.
 
-### `vuevox.calls.waitForAnalysis(callId, options?)`
+### `oriacall.calls.waitForAnalysis(callId, options?)`
 
-Polls `vuevox.calls.get(callId)` until the call analysis status is `completed` or `failed`.
+Polls `oriacall.calls.get(callId)` until the call analysis status is `completed` or `failed`.
 
 Required scope: `calls:read`.
 
@@ -420,13 +420,13 @@ Options: `WaitForAnalysisOptions`
 | `timeoutMs` | `number` | Timeout before throwing `analysis_timeout`. Defaults to `120000`. |
 
 ```ts
-const response = await vuevox.calls.waitForAnalysis("call-id", { timeoutMs: 180000 });
+const response = await oriacall.calls.waitForAnalysis("call-id", { timeoutMs: 180000 });
 console.log(response.data.data.analysis);
 ```
 
-Returns: `Promise<VueVoxApiResponse<CallDetailResponse>>`.
+Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
 
-### `vuevox.calls.paginate(options?)`
+### `oriacall.calls.paginate(options?)`
 
 Iterates organization calls across all pages.
 
@@ -435,14 +435,14 @@ Required scope: `calls:read`.
 Options: `ListCallsOptions`
 
 ```ts
-for await (const call of vuevox.calls.paginate({ leadId: "lead-id" })) {
+for await (const call of oriacall.calls.paginate({ leadId: "lead-id" })) {
   console.log(call.id);
 }
 ```
 
 Returns: `AsyncGenerator<CallSummary>`.
 
-### `vuevox.leads.list(options?)`
+### `oriacall.leads.list(options?)`
 
 Lists organization leads. The `leads:read` scope includes lead email and phone contact details.
 
@@ -462,7 +462,7 @@ Options: `ListLeadsOptions`
 | `customFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields. |
 
 ```ts
-const response = await vuevox.leads.list({
+const response = await oriacall.leads.list({
   limit: 50,
   spaceId: "space-id",
   customFields: {
@@ -476,22 +476,22 @@ for (const lead of response.data.data) {
 }
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadsListResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadsListResponse>>`.
 
-### `vuevox.leads.get(leadId)`
+### `oriacall.leads.get(leadId)`
 
 Gets a lead detail record, including email and phone contact details.
 
 Required scope: `leads:read`.
 
 ```ts
-const response = await vuevox.leads.get("lead-id");
+const response = await oriacall.leads.get("lead-id");
 console.log(response.data.data.externalId, response.data.data.email, response.data.data.phone, response.data.data.customFields);
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadDetailResponse>>`.
 
-### `vuevox.leads.update(leadId, input)`
+### `oriacall.leads.update(leadId, input)`
 
 Updates a lead and/or its custom fields.
 
@@ -500,7 +500,7 @@ Required scope: `leads:write`.
 Input: `LeadUpdateRequest`
 
 ```ts
-const response = await vuevox.leads.update("lead-id", {
+const response = await oriacall.leads.update("lead-id", {
   email: "ada@example.com",
   customFields: {
     crm_stage: "qualified",
@@ -511,9 +511,9 @@ const response = await vuevox.leads.update("lead-id", {
 console.log(response.data.data.customFields);
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadDetailResponse>>`.
 
-### `vuevox.leads.upsertByExternalId(externalId, input)`
+### `oriacall.leads.upsertByExternalId(externalId, input)`
 
 Creates or updates a lead by the integrating CRM/system ID. This is the preferred write method for CRM integrations because callers can use their own stable lead ID.
 
@@ -522,7 +522,7 @@ Required scope: `leads:write`.
 Input: `LeadUpsertRequest`
 
 ```ts
-const response = await vuevox.leads.upsertByExternalId("hubspot_123", {
+const response = await oriacall.leads.upsertByExternalId("hubspot_123", {
   firstName: "Ada",
   lastName: "Lovelace",
   email: "ada@example.com",
@@ -535,9 +535,9 @@ const response = await vuevox.leads.upsertByExternalId("hubspot_123", {
 console.log(response.data.data.id, response.data.data.customFields);
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadDetailResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadDetailResponse>>`.
 
-### `vuevox.leads.paginate(options?)`
+### `oriacall.leads.paginate(options?)`
 
 Iterates organization leads across all pages.
 
@@ -546,14 +546,14 @@ Required scope: `leads:read`.
 Options: `ListLeadsOptions`
 
 ```ts
-for await (const lead of vuevox.leads.paginate({ createdAfter: "2026-01-01T00:00:00.000Z" })) {
+for await (const lead of oriacall.leads.paginate({ createdAfter: "2026-01-01T00:00:00.000Z" })) {
   console.log(lead.id, lead.externalId);
 }
 ```
 
 Returns: `AsyncGenerator<Lead>`.
 
-### `vuevox.leadCustomFields.list(options?)`
+### `oriacall.leadCustomFields.list(options?)`
 
 Lists organization lead custom field definitions.
 
@@ -566,13 +566,13 @@ Options: `ListLeadCustomFieldsOptions`
 | `includeArchived` | `boolean` | Include archived definitions. Defaults to `false`. |
 
 ```ts
-const response = await vuevox.leadCustomFields.list();
+const response = await oriacall.leadCustomFields.list();
 console.log(response.data.data);
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadCustomFieldsListResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadCustomFieldsListResponse>>`.
 
-### `vuevox.leadCustomFields.create(input)`
+### `oriacall.leadCustomFields.create(input)`
 
 Creates a lead custom field definition. Supported types are `text`, `number`, `boolean`, `date`, `datetime`, `select`, and `multi_select`.
 
@@ -581,7 +581,7 @@ Required scope: `lead_custom_fields:manage`.
 Input: `LeadCustomFieldCreateRequest`
 
 ```ts
-const response = await vuevox.leadCustomFields.create({
+const response = await oriacall.leadCustomFields.create({
   key: "crm_stage",
   label: "CRM Stage",
   type: "select",
@@ -592,9 +592,9 @@ const response = await vuevox.leadCustomFields.create({
 console.log(response.data.data.key);
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadCustomFieldResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadCustomFieldResponse>>`.
 
-### `vuevox.leadCustomFields.update(key, input)`
+### `oriacall.leadCustomFields.update(key, input)`
 
 Updates mutable metadata for a lead custom field definition. Field keys and types are immutable.
 
@@ -603,15 +603,15 @@ Required scope: `lead_custom_fields:manage`.
 Input: `LeadCustomFieldUpdateRequest`
 
 ```ts
-await vuevox.leadCustomFields.update("crm_stage", {
+await oriacall.leadCustomFields.update("crm_stage", {
   label: "CRM Pipeline Stage",
   archived: false,
 });
 ```
 
-Returns: `Promise<VueVoxApiResponse<LeadCustomFieldResponse>>`.
+Returns: `Promise<OriacallApiResponse<LeadCustomFieldResponse>>`.
 
-### `vuevox.webhooks.endpoints.list(options?)`
+### `oriacall.webhooks.endpoints.list(options?)`
 
 Lists webhook endpoints for the authenticated API client.
 
@@ -620,13 +620,13 @@ Required scope: `webhooks:read`.
 Options: `ListWebhookEndpointsOptions`
 
 ```ts
-const response = await vuevox.webhooks.endpoints.list({ limit: 50 });
+const response = await oriacall.webhooks.endpoints.list({ limit: 50 });
 console.log(response.data.data);
 ```
 
-Returns: `Promise<VueVoxApiResponse<WebhookEndpointsListResponse>>`.
+Returns: `Promise<OriacallApiResponse<WebhookEndpointsListResponse>>`.
 
-### `vuevox.webhooks.endpoints.create(input)`
+### `oriacall.webhooks.endpoints.create(input)`
 
 Creates a webhook endpoint. The signing secret is returned only once in this response.
 
@@ -635,17 +635,17 @@ Required scope: `webhooks:write`.
 Input: `WebhookEndpointCreateRequest`
 
 ```ts
-const response = await vuevox.webhooks.endpoints.create({
-  url: "https://example.com/vuevox/webhooks",
+const response = await oriacall.webhooks.endpoints.create({
+  url: "https://example.com/oriacall/webhooks",
   events: ["analysis.completed", "analysis.failed"],
 });
 
 console.log(response.data.data.id, response.data.data.secret);
 ```
 
-Returns: `Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>>`.
+Returns: `Promise<OriacallApiResponse<WebhookEndpointSecretResponse>>`.
 
-### `vuevox.webhooks.endpoints.update(endpointId, input)`
+### `oriacall.webhooks.endpoints.update(endpointId, input)`
 
 Updates a webhook endpoint URL, event subscriptions, or active state.
 
@@ -654,78 +654,78 @@ Required scope: `webhooks:write`.
 Input: `WebhookEndpointUpdateRequest`
 
 ```ts
-const response = await vuevox.webhooks.endpoints.update("endpoint-id", {
+const response = await oriacall.webhooks.endpoints.update("endpoint-id", {
   events: ["analysis.completed"],
   isActive: true,
 });
 ```
 
-Returns: `Promise<VueVoxApiResponse<WebhookEndpointResponse>>`.
+Returns: `Promise<OriacallApiResponse<WebhookEndpointResponse>>`.
 
-### `vuevox.webhooks.endpoints.delete(endpointId)`
+### `oriacall.webhooks.endpoints.delete(endpointId)`
 
 Deletes a webhook endpoint.
 
 Required scope: `webhooks:write`.
 
 ```ts
-await vuevox.webhooks.endpoints.delete("endpoint-id");
+await oriacall.webhooks.endpoints.delete("endpoint-id");
 ```
 
-Returns: `Promise<VueVoxApiResponse<null>>`.
+Returns: `Promise<OriacallApiResponse<null>>`.
 
-### `vuevox.webhooks.endpoints.rotateSecret(endpointId)`
+### `oriacall.webhooks.endpoints.rotateSecret(endpointId)`
 
 Rotates the endpoint signing secret. The new secret is returned only once.
 
 Required scope: `webhooks:write`.
 
 ```ts
-const response = await vuevox.webhooks.endpoints.rotateSecret("endpoint-id");
+const response = await oriacall.webhooks.endpoints.rotateSecret("endpoint-id");
 console.log(response.data.data.secret);
 ```
 
-Returns: `Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>>`.
+Returns: `Promise<OriacallApiResponse<WebhookEndpointSecretResponse>>`.
 
-### `vuevox.webhooks.endpoints.test(endpointId)`
+### `oriacall.webhooks.endpoints.test(endpointId)`
 
 Queues a `webhook.test` delivery to validate endpoint reachability and signature verification.
 
 Required scope: `webhooks:write`.
 
 ```ts
-const response = await vuevox.webhooks.endpoints.test("endpoint-id");
+const response = await oriacall.webhooks.endpoints.test("endpoint-id");
 console.log(response.data.data.eventType, response.data.data.status);
 ```
 
-Returns: `Promise<VueVoxApiResponse<WebhookTestResponse>>`.
+Returns: `Promise<OriacallApiResponse<WebhookTestResponse>>`.
 
-### `vuevox.webhooks.endpoints.paginate(options?)`
+### `oriacall.webhooks.endpoints.paginate(options?)`
 
 Iterates webhook endpoints across all pages.
 
 Required scope: `webhooks:read`.
 
 ```ts
-for await (const endpoint of vuevox.webhooks.endpoints.paginate({ limit: 50 })) {
+for await (const endpoint of oriacall.webhooks.endpoints.paginate({ limit: 50 })) {
   console.log(endpoint.id, endpoint.events);
 }
 ```
 
 Returns: `AsyncGenerator<WebhookEndpoint>`.
 
-### `verifyVueVoxWebhookSignature(input)`
+### `verifyOriacallWebhookSignature(input)`
 
 Verifies a webhook HMAC signature. Pass the raw request body string exactly as received.
 
 ```ts
-import { verifyVueVoxWebhookSignature } from "@vuevox/sdk";
+import { verifyOriacallWebhookSignature } from "@oriacall/sdk";
 
-const valid = await verifyVueVoxWebhookSignature({
+const valid = await verifyOriacallWebhookSignature({
   body: rawBody,
-  secret: process.env.VUEVOX_WEBHOOK_SECRET!,
-  signature: request.headers.get("VueVox-Signature") ?? "",
-  timestamp: request.headers.get("VueVox-Timestamp") ?? "",
+  secret: process.env.ORIACALL_WEBHOOK_SECRET!,
+  signature: request.headers.get("Oriacall-Signature") ?? "",
+  timestamp: request.headers.get("Oriacall-Timestamp") ?? "",
 });
 ```
 
@@ -736,24 +736,24 @@ Returns: `Promise<boolean>`.
 For advanced integrations, `raw` exposes a typed lower-level OpenAPI client. You must attach authorization yourself.
 
 ```ts
-const { data, error } = await vuevox.raw.GET("/v1/hello", {
+const { data, error } = await oriacall.raw.GET("/v1/hello", {
   headers: {
-    Authorization: `Bearer ${await vuevox.getAccessToken()}`,
+    Authorization: `Bearer ${await oriacall.getAccessToken()}`,
   },
 });
 ```
 
 ## Errors
 
-API errors throw `VueVoxApiError`.
+API errors throw `OriacallApiError`.
 
 ```ts
-import { VueVoxApiError, createVueVoxClient } from "@vuevox/sdk";
+import { OriacallApiError, createOriacallClient } from "@oriacall/sdk";
 
 try {
-  await vuevox.calls.list({ limit: 50 });
+  await oriacall.calls.list({ limit: 50 });
 } catch (error) {
-  if (error instanceof VueVoxApiError) {
+  if (error instanceof OriacallApiError) {
     console.error(error.status, error.code, error.message, error.requestId);
   }
 
@@ -772,7 +772,7 @@ Error fields:
 | `details` | `Record<string, unknown> \| undefined` | Structured error details when present. |
 | `retryAfter` | `number \| undefined` | Seconds to wait before retrying when present. |
 | `isRateLimited` | `boolean` | `true` for rate limit errors. |
-| `response` | `VueVoxErrorResponse \| undefined` | Full API error response when available. |
+| `response` | `OriacallErrorResponse \| undefined` | Full API error response when available. |
 
 Common API error codes:
 
@@ -804,9 +804,9 @@ custom_field_conflict
 Configure retry/backoff for safe SDK-managed requests. The SDK retries token requests and GET endpoints for `429`, `500`, `502`, `503`, and `504`, and respects `Retry-After` when present.
 
 ```ts
-const vuevox = createVueVoxClient({
-  clientId: process.env.VUEVOX_CLIENT_ID!,
-  clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
+const oriacall = createOriacallClient({
+  clientId: process.env.ORIACALL_CLIENT_ID!,
+  clientSecret: process.env.ORIACALL_CLIENT_SECRET!,
   scope: ["calls:read"],
   retries: 2,
   retryBaseDelayMs: 250,
@@ -828,16 +828,16 @@ The SDK:
 The SDK defaults to:
 
 ```text
-https://api.vuevox.com
+https://api.oriacall.com
 ```
 
-If VueVox support gives you a custom API base URL, pass it explicitly:
+If Oriacall support gives you a custom API base URL, pass it explicitly:
 
 ```ts
-const vuevox = createVueVoxClient({
-  baseUrl: "https://api.vuevox.com",
-  clientId: process.env.VUEVOX_CLIENT_ID!,
-  clientSecret: process.env.VUEVOX_CLIENT_SECRET!,
+const oriacall = createOriacallClient({
+  baseUrl: "https://api.oriacall.com",
+  clientId: process.env.ORIACALL_CLIENT_ID!,
+  clientSecret: process.env.ORIACALL_CLIENT_SECRET!,
   scope: ["calls:read"],
 });
 ```
@@ -878,11 +878,11 @@ import type {
   SpacesListResponse,
   UploadCallInput,
   VerifyWebhookSignatureInput,
-  VueVoxApiResponse,
-  VueVoxClientOptions,
-  VueVoxErrorResponse,
-  VueVoxResponseEvent,
-  VueVoxResponseMetadata,
+  OriacallApiResponse,
+  OriacallClientOptions,
+  OriacallErrorResponse,
+  OriacallResponseEvent,
+  OriacallResponseMetadata,
   WaitForAnalysisOptions,
   WebhookEndpoint,
   WebhookEndpointCreateRequest,
@@ -892,7 +892,7 @@ import type {
   WebhookEndpointsListResponse,
   WebhookEventPayload,
   WebhookTestResponse,
-} from "@vuevox/sdk";
+} from "@oriacall/sdk";
 ```
 
 Generated OpenAPI-derived types are included in the package declaration files, so editors can inspect the exact response fields for each method.

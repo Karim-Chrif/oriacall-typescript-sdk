@@ -1,6 +1,6 @@
 # Internal Publishing Checklist
 
-This checklist is for maintainers publishing `@vuevox/sdk` to npm. It is not included in the npm package.
+This checklist is for maintainers publishing `@oriacall/sdk` to npm. It is not included in the npm package.
 
 ## Versioning
 
@@ -41,7 +41,7 @@ package/package.json
 
 ## Publish
 
-Publishing requires npm permission for the `@vuevox` scope.
+Publishing requires npm permission for the `@oriacall` scope.
 
 ```bash
 npm whoami
@@ -51,8 +51,8 @@ npm publish --access public
 ## After Publish
 
 ```bash
-npm view @vuevox/sdk version
-npm view @vuevox/sdk files
+npm view @oriacall/sdk version
+npm view @oriacall/sdk files
 ```
 
 ## Bad Release Handling
@@ -60,5 +60,5 @@ npm view @vuevox/sdk files
 Do not unpublish unless the package contains secrets or legally problematic content. For broken releases, publish a fixed patch version and deprecate the bad version:
 
 ```bash
-npm deprecate @vuevox/sdk@0.1.0 "Use 0.1.1 instead."
+npm deprecate @oriacall/sdk@0.1.0 "Use 0.1.1 instead."
 ```
