@@ -1,4 +1,4 @@
-export { createVueVoxClient } from "./client.js";
+export { createVueVoxClient, verifyVueVoxWebhookSignature } from "./client.js";
 export type {
   Agent,
   AgentsListResponse,
@@ -25,14 +25,24 @@ export type {
   ListLeadCustomFieldsOptions,
   ListLeadsOptions,
   ListSpacesOptions,
+  ListWebhookEndpointsOptions,
   Space,
   SpacesListResponse,
   UploadCallInput,
+  VerifyWebhookSignatureInput,
   VueVoxApiResponse,
   VueVoxClientOptions,
   VueVoxResponseEvent,
   VueVoxResponseMetadata,
   WaitForAnalysisOptions,
+  WebhookEndpoint,
+  WebhookEndpointCreateRequest,
+  WebhookEndpointResponse,
+  WebhookEndpointSecretResponse,
+  WebhookEndpointUpdateRequest,
+  WebhookEndpointsListResponse,
+  WebhookEventPayload,
+  WebhookTestResponse,
 } from "./client.js";
 export { VueVoxApiError } from "./errors.js";
 export type { VueVoxErrorResponse } from "./errors.js";

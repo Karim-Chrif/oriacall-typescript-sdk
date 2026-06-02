@@ -18,6 +18,14 @@ export type LeadCustomFieldsListResponse = components["schemas"]["LeadCustomFiel
 export type LeadCustomFieldResponse = components["schemas"]["LeadCustomFieldResponse"];
 export type LeadCustomFieldCreateRequest = components["schemas"]["LeadCustomFieldCreateRequest"];
 export type LeadCustomFieldUpdateRequest = components["schemas"]["LeadCustomFieldUpdateRequest"];
+export type WebhookEndpoint = components["schemas"]["WebhookEndpoint"];
+export type WebhookEndpointCreateRequest = components["schemas"]["WebhookEndpointCreateRequest"];
+export type WebhookEndpointUpdateRequest = components["schemas"]["WebhookEndpointUpdateRequest"];
+export type WebhookEndpointResponse = components["schemas"]["WebhookEndpointResponse"];
+export type WebhookEndpointSecretResponse = components["schemas"]["WebhookEndpointSecretResponse"];
+export type WebhookEndpointsListResponse = components["schemas"]["WebhookEndpointsListResponse"];
+export type WebhookTestResponse = components["schemas"]["WebhookTestResponse"];
+export type WebhookEventPayload = components["schemas"]["WebhookEventPayload"];
 export type LeadUpsertRequest = components["schemas"]["LeadUpsertRequest"];
 export type LeadUpdateRequest = components["schemas"]["LeadUpdateRequest"];
 export type Space = components["schemas"]["Space"];
@@ -69,6 +77,17 @@ export interface ListLeadsOptions extends ListSpacesOptions {
 
 export interface ListLeadCustomFieldsOptions {
   includeArchived?: boolean;
+}
+
+export interface ListWebhookEndpointsOptions extends ListSpacesOptions {}
+
+export interface VerifyWebhookSignatureInput {
+  body: string;
+  secret: string;
+  signature: string;
+  timestamp: string;
+  toleranceSeconds?: number;
+  now?: number;
 }
 
 export interface VueVoxResponseMetadata {
@@ -239,6 +258,30 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     return apiJson<LeadCustomFieldResponse>("PATCH", `/v1/lead-custom-fields/${encodeURIComponent(key)}`, input);
   }
 
+  async function listWebhookEndpoints(listOptions: ListWebhookEndpointsOptions = {}): Promise<VueVoxApiResponse<WebhookEndpointsListResponse>> {
+    return apiGet<WebhookEndpointsListResponse>("/v1/webhooks/endpoints", listOptions);
+  }
+
+  async function createWebhookEndpoint(input: WebhookEndpointCreateRequest): Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>> {
+    return apiJson<WebhookEndpointSecretResponse>("POST", "/v1/webhooks/endpoints", input);
+  }
+
+  async function updateWebhookEndpoint(endpointId: string, input: WebhookEndpointUpdateRequest): Promise<VueVoxApiResponse<WebhookEndpointResponse>> {
+    return apiJson<WebhookEndpointResponse>("PATCH", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}`, input);
+  }
+
+  async function deleteWebhookEndpoint(endpointId: string): Promise<VueVoxApiResponse<null>> {
+    return apiDelete(`/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}`);
+  }
+
+  async function rotateWebhookEndpointSecret(endpointId: string): Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>> {
+    return apiJson<WebhookEndpointSecretResponse>("POST", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}/rotate-secret`, {});
+  }
+
+  async function testWebhookEndpoint(endpointId: string): Promise<VueVoxApiResponse<WebhookTestResponse>> {
+    return apiJson<WebhookTestResponse>("POST", `/v1/webhooks/endpoints/${encodeURIComponent(endpointId)}/test`, {});
+  }
+
   async function apiGet<T>(path: string, query?: object): Promise<VueVoxApiResponse<T>> {
     const accessToken = await getAccessToken();
     const result = await requestJson<T>("GET", path, {
@@ -264,6 +307,34 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     });
 
     return withMetadata(result.data, result.response, result.requestId);
+  }
+
+  async function apiDelete(path: string): Promise<VueVoxApiResponse<null>> {
+    const accessToken = await getAccessToken();
+    const response = await fetchFn(buildUrl(baseUrl, path, undefined), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const body = await parseJson<ErrorResponse>(response);
+    const requestId = getRequestId(response, body);
+    const retryAfter = retryAfterSeconds(response);
+    notifyResponse(options, "DELETE", path, response, requestId, retryAfter);
+
+    if (response.ok) {
+      return withMetadata(null, response, requestId);
+    }
+
+    const error = isErrorResponse(body) ? body.error : null;
+    throw new VueVoxApiError(
+      response.status,
+      error?.code ?? "api_request_failed",
+      error?.message ?? "VueVox API request failed.",
+      isErrorResponse(body) ? body : undefined,
+      requestId,
+      retryAfter,
+    );
   }
 
   async function apiMultipart<T>(method: "POST", path: string, body: FormData, headers: Record<string, string>): Promise<VueVoxApiResponse<T>> {
@@ -354,8 +425,38 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
       create: createLeadCustomField,
       update: updateLeadCustomField,
     },
+    webhooks: {
+      endpoints: {
+        list: listWebhookEndpoints,
+        create: createWebhookEndpoint,
+        update: updateWebhookEndpoint,
+        delete: deleteWebhookEndpoint,
+        rotateSecret: rotateWebhookEndpointSecret,
+        test: testWebhookEndpoint,
+        paginate: (listOptions: ListWebhookEndpointsOptions = {}) => paginate(listWebhookEndpoints, listOptions),
+      },
+    },
     raw,
   };
+}
+
+export async function verifyVueVoxWebhookSignature(input: VerifyWebhookSignatureInput): Promise<boolean> {
+  const toleranceSeconds = input.toleranceSeconds ?? 300;
+  const now = input.now ?? Date.now();
+  const timestampSeconds = Number(input.timestamp);
+
+  if (!Number.isFinite(timestampSeconds)) {
+    return false;
+  }
+
+  if (Math.abs(Math.floor(now / 1000) - timestampSeconds) > toleranceSeconds) {
+    return false;
+  }
+
+  const expected = await hmacSha256Hex(input.secret, `${input.timestamp}.${input.body}`);
+  const provided = input.signature.startsWith("v1=") ? input.signature.slice(3) : input.signature;
+
+  return constantTimeEqual(expected, provided);
 }
 
 function formatScope(scope: string | string[] | undefined): string | undefined {
@@ -497,4 +598,30 @@ function retryAfterSeconds(response: Response): number | undefined {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function hmacSha256Hex(secret: string, value: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+
+  return [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let index = 0; index < left.length; index++) {
+    result |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+
+  return result === 0;
 }

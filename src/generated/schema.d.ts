@@ -148,6 +148,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/webhooks/endpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List webhook endpoints
+         * @description Returns webhook endpoints for the authenticated API client using cursor pagination.
+         */
+        get: operations["listWebhookEndpoints"];
+        put?: never;
+        /**
+         * Create a webhook endpoint
+         * @description Creates a webhook endpoint for the authenticated API client. The signing secret is returned only once.
+         */
+        post: operations["createWebhookEndpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/endpoints/{endpointId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a webhook endpoint */
+        delete: operations["deleteWebhookEndpoint"];
+        options?: never;
+        head?: never;
+        /** Update a webhook endpoint */
+        patch: operations["updateWebhookEndpoint"];
+        trace?: never;
+    };
+    "/v1/webhooks/endpoints/{endpointId}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a webhook endpoint signing secret
+         * @description Replaces the endpoint signing secret. The new secret is returned only once.
+         */
+        post: operations["rotateWebhookEndpointSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/endpoints/{endpointId}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test webhook event
+         * @description Queues a webhook.test delivery to validate endpoint reachability and signature verification.
+         */
+        post: operations["testWebhookEndpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/leads": {
         parameters: {
             query?: never;
@@ -267,7 +349,7 @@ export interface components {
             client_secret: string;
             /**
              * @description Space-separated scopes requested for the access token.
-             * @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage
+             * @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write
              */
             scope?: string;
         };
@@ -277,7 +359,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage */
+            /** @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write */
             scope: string;
         };
         HelloResponse: {
@@ -511,6 +593,79 @@ export interface components {
             isFilterable?: boolean;
             archived?: boolean;
         };
+        /**
+         * @description Subscribable webhook event type.
+         * @enum {string}
+         */
+        WebhookEventType: "analysis.completed" | "analysis.failed";
+        WebhookEndpoint: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uri */
+            url: string;
+            events: components["schemas"]["WebhookEventType"][];
+            isActive: boolean;
+            /** Format: date-time */
+            lastDeliveredAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WebhookEndpointWithSecret: components["schemas"]["WebhookEndpoint"] & {
+            /** @description Signing secret shown only when creating or rotating the endpoint. */
+            secret: string;
+        };
+        WebhookEndpointsListResponse: {
+            data: components["schemas"]["WebhookEndpoint"][];
+            pagination: components["schemas"]["CursorPagination"];
+        };
+        WebhookEndpointResponse: {
+            data: components["schemas"]["WebhookEndpoint"];
+        };
+        WebhookEndpointSecretResponse: {
+            data: components["schemas"]["WebhookEndpointWithSecret"];
+        };
+        WebhookEndpointCreateRequest: {
+            /**
+             * Format: uri
+             * @description Public HTTPS URL that will receive webhook POST requests.
+             */
+            url: string;
+            events: components["schemas"]["WebhookEventType"][];
+            /** @default true */
+            isActive: boolean;
+        };
+        WebhookEndpointUpdateRequest: {
+            /** Format: uri */
+            url?: string;
+            events?: components["schemas"]["WebhookEventType"][];
+            isActive?: boolean;
+        };
+        WebhookTestResponse: {
+            data: {
+                /**
+                 * Format: uuid
+                 * @description Delivery ID.
+                 */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "retrying" | "delivered" | "failed" | "skipped";
+                /** @enum {string} */
+                eventType: "webhook.test";
+            };
+        };
+        WebhookEventPayload: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "analysis.completed" | "analysis.failed" | "webhook.test";
+            /** Format: date-time */
+            createdAt: string;
+            data: {
+                [key: string]: unknown;
+            };
+        };
         CursorPagination: {
             /** @example 50 */
             limit: number;
@@ -535,7 +690,10 @@ export interface components {
         };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /** @description Webhook endpoint ID. */
+        WebhookEndpointId: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -1046,6 +1204,320 @@ export interface operations {
             };
             /** @description Organization AI settings, evaluation grid, or audio file is missing. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listWebhookEndpoints: {
+        parameters: {
+            query?: {
+                /** @description Number of endpoints to return. Defaults to 50. Maximum is 100. */
+                limit?: number;
+                /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated webhook endpoints response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointsListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Query parameters failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookEndpointCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Webhook endpoint created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointSecretResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Webhook endpoint ID. */
+                endpointId: components["parameters"]["WebhookEndpointId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook endpoint deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook endpoint was not found for this API client. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Webhook endpoint ID. */
+                endpointId: components["parameters"]["WebhookEndpointId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookEndpointUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Webhook endpoint updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook endpoint was not found for this API client. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rotateWebhookEndpointSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Webhook endpoint ID. */
+                endpointId: components["parameters"]["WebhookEndpointId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook endpoint secret rotated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointSecretResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook endpoint was not found for this API client. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    testWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Webhook endpoint ID. */
+                endpointId: components["parameters"]["WebhookEndpointId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test delivery queued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookTestResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook endpoint was not found for this API client. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

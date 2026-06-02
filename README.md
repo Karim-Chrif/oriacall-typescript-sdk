@@ -35,6 +35,8 @@ calls:write
 leads:read
 leads:write
 lead_custom_fields:manage
+webhooks:read
+webhooks:write
 ```
 
 The token request can only request scopes that were granted to that API client.
@@ -117,6 +119,12 @@ vuevox.leads.paginate();
 vuevox.leadCustomFields.list();
 vuevox.leadCustomFields.create({ key: "crm_stage", label: "CRM Stage", type: "select", options: ["new", "qualified"] });
 vuevox.leadCustomFields.update("crm_stage", { label: "CRM Stage" });
+vuevox.webhooks.endpoints.list();
+vuevox.webhooks.endpoints.create({ url: "https://example.com/vuevox/webhooks", events: ["analysis.completed", "analysis.failed"] });
+vuevox.webhooks.endpoints.update("endpoint-id", { isActive: false });
+vuevox.webhooks.endpoints.rotateSecret("endpoint-id");
+vuevox.webhooks.endpoints.test("endpoint-id");
+vuevox.webhooks.endpoints.delete("endpoint-id");
 vuevox.raw.GET("/v1/hello", { headers: { Authorization: `Bearer ${await vuevox.getAccessToken()}` } });
 ```
 
@@ -164,7 +172,7 @@ for await (const call of vuevox.calls.paginate({ limit: 50 })) {
 }
 ```
 
-Pagination helpers are available for `spaces`, `agents`, `calls`, and `leads`.
+Pagination helpers are available for `spaces`, `agents`, `calls`, `leads`, and `webhooks.endpoints`.
 
 ## Methods
 
@@ -601,6 +609,126 @@ await vuevox.leadCustomFields.update("crm_stage", {
 
 Returns: `Promise<VueVoxApiResponse<LeadCustomFieldResponse>>`.
 
+### `vuevox.webhooks.endpoints.list(options?)`
+
+Lists webhook endpoints for the authenticated API client.
+
+Required scope: `webhooks:read`.
+
+Options: `ListWebhookEndpointsOptions`
+
+```ts
+const response = await vuevox.webhooks.endpoints.list({ limit: 50 });
+console.log(response.data.data);
+```
+
+Returns: `Promise<VueVoxApiResponse<WebhookEndpointsListResponse>>`.
+
+### `vuevox.webhooks.endpoints.create(input)`
+
+Creates a webhook endpoint. The signing secret is returned only once in this response.
+
+Required scope: `webhooks:write`.
+
+Input: `WebhookEndpointCreateRequest`
+
+```ts
+const response = await vuevox.webhooks.endpoints.create({
+  url: "https://example.com/vuevox/webhooks",
+  events: ["analysis.completed", "analysis.failed"],
+});
+
+console.log(response.data.data.id, response.data.data.secret);
+```
+
+Returns: `Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>>`.
+
+### `vuevox.webhooks.endpoints.update(endpointId, input)`
+
+Updates a webhook endpoint URL, event subscriptions, or active state.
+
+Required scope: `webhooks:write`.
+
+Input: `WebhookEndpointUpdateRequest`
+
+```ts
+const response = await vuevox.webhooks.endpoints.update("endpoint-id", {
+  events: ["analysis.completed"],
+  isActive: true,
+});
+```
+
+Returns: `Promise<VueVoxApiResponse<WebhookEndpointResponse>>`.
+
+### `vuevox.webhooks.endpoints.delete(endpointId)`
+
+Deletes a webhook endpoint.
+
+Required scope: `webhooks:write`.
+
+```ts
+await vuevox.webhooks.endpoints.delete("endpoint-id");
+```
+
+Returns: `Promise<VueVoxApiResponse<null>>`.
+
+### `vuevox.webhooks.endpoints.rotateSecret(endpointId)`
+
+Rotates the endpoint signing secret. The new secret is returned only once.
+
+Required scope: `webhooks:write`.
+
+```ts
+const response = await vuevox.webhooks.endpoints.rotateSecret("endpoint-id");
+console.log(response.data.data.secret);
+```
+
+Returns: `Promise<VueVoxApiResponse<WebhookEndpointSecretResponse>>`.
+
+### `vuevox.webhooks.endpoints.test(endpointId)`
+
+Queues a `webhook.test` delivery to validate endpoint reachability and signature verification.
+
+Required scope: `webhooks:write`.
+
+```ts
+const response = await vuevox.webhooks.endpoints.test("endpoint-id");
+console.log(response.data.data.eventType, response.data.data.status);
+```
+
+Returns: `Promise<VueVoxApiResponse<WebhookTestResponse>>`.
+
+### `vuevox.webhooks.endpoints.paginate(options?)`
+
+Iterates webhook endpoints across all pages.
+
+Required scope: `webhooks:read`.
+
+```ts
+for await (const endpoint of vuevox.webhooks.endpoints.paginate({ limit: 50 })) {
+  console.log(endpoint.id, endpoint.events);
+}
+```
+
+Returns: `AsyncGenerator<WebhookEndpoint>`.
+
+### `verifyVueVoxWebhookSignature(input)`
+
+Verifies a webhook HMAC signature. Pass the raw request body string exactly as received.
+
+```ts
+import { verifyVueVoxWebhookSignature } from "@vuevox/sdk";
+
+const valid = await verifyVueVoxWebhookSignature({
+  body: rawBody,
+  secret: process.env.VUEVOX_WEBHOOK_SECRET!,
+  signature: request.headers.get("VueVox-Signature") ?? "",
+  timestamp: request.headers.get("VueVox-Timestamp") ?? "",
+});
+```
+
+Returns: `Promise<boolean>`.
+
 ## Lower-Level Calls
 
 For advanced integrations, `raw` exposes a typed lower-level OpenAPI client. You must attach authorization yourself.
@@ -742,15 +870,25 @@ import type {
   ListLeadCustomFieldsOptions,
   ListLeadsOptions,
   ListSpacesOptions,
+  ListWebhookEndpointsOptions,
   Space,
   SpacesListResponse,
   UploadCallInput,
+  VerifyWebhookSignatureInput,
   VueVoxApiResponse,
   VueVoxClientOptions,
   VueVoxErrorResponse,
   VueVoxResponseEvent,
   VueVoxResponseMetadata,
   WaitForAnalysisOptions,
+  WebhookEndpoint,
+  WebhookEndpointCreateRequest,
+  WebhookEndpointResponse,
+  WebhookEndpointSecretResponse,
+  WebhookEndpointUpdateRequest,
+  WebhookEndpointsListResponse,
+  WebhookEventPayload,
+  WebhookTestResponse,
 } from "@vuevox/sdk";
 ```
 
