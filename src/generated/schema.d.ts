@@ -695,7 +695,10 @@ export interface components {
         WebhookEndpointId: string;
     };
     requestBodies: never;
-    headers: never;
+    headers: {
+        /** @description Request correlation ID for logs and support. Matches error.requestId on error responses. */
+        XRequestId: string;
+    };
     pathItems: never;
 }
 export type $defs = Record<string, never>;
@@ -716,6 +719,7 @@ export interface operations {
             /** @description Access token issued. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -725,6 +729,7 @@ export interface operations {
             /** @description Requested scope is not allowed. */
             400: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -734,6 +739,7 @@ export interface operations {
             /** @description Client authentication failed. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -743,6 +749,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -763,6 +770,7 @@ export interface operations {
             /** @description Hello response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -772,6 +780,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -781,6 +790,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -790,6 +800,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -819,6 +830,7 @@ export interface operations {
             /** @description Paginated spaces response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -828,6 +840,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -837,6 +850,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -846,6 +860,7 @@ export interface operations {
             /** @description Query parameters failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -855,6 +870,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -886,6 +902,7 @@ export interface operations {
             /** @description Paginated agents response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -895,6 +912,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -904,6 +922,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -913,6 +932,7 @@ export interface operations {
             /** @description Query parameters failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -922,6 +942,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -963,6 +984,7 @@ export interface operations {
             /** @description Paginated calls response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -972,6 +994,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -981,6 +1004,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -990,6 +1014,7 @@ export interface operations {
             /** @description Query parameters failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -999,6 +1024,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -1038,6 +1064,7 @@ export interface operations {
             /** @description Call uploaded. Analysis is queued when metadata.queueAnalysis is true. */
             201: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1047,6 +1074,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1056,6 +1084,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1065,6 +1094,7 @@ export interface operations {
             /** @description Idempotency key conflict, external call ID conflict, or analysis already queued. */
             409: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1074,6 +1104,7 @@ export interface operations {
             /** @description Multipart upload or metadata failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1097,6 +1128,7 @@ export interface operations {
             /** @description Call detail response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1106,6 +1138,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1115,6 +1148,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1124,6 +1158,7 @@ export interface operations {
             /** @description Call was not found in the API client's organization. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1133,6 +1168,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -1160,6 +1196,7 @@ export interface operations {
             /** @description Analysis queued. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1169,6 +1206,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1178,6 +1216,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1187,6 +1226,7 @@ export interface operations {
             /** @description Call was not found in the API client's organization. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1196,6 +1236,7 @@ export interface operations {
             /** @description Analysis is already queued or processing. */
             409: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1205,6 +1246,7 @@ export interface operations {
             /** @description Organization AI settings, evaluation grid, or audio file is missing. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1230,6 +1272,7 @@ export interface operations {
             /** @description Paginated webhook endpoints response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1239,6 +1282,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1248,6 +1292,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1257,6 +1302,7 @@ export interface operations {
             /** @description Query parameters failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1281,6 +1327,7 @@ export interface operations {
             /** @description Webhook endpoint created. */
             201: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1290,6 +1337,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1299,6 +1347,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1308,6 +1357,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1331,6 +1381,7 @@ export interface operations {
             /** @description Webhook endpoint deleted. */
             204: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -1338,6 +1389,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1347,6 +1399,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1356,6 +1409,7 @@ export interface operations {
             /** @description Webhook endpoint was not found for this API client. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1383,6 +1437,7 @@ export interface operations {
             /** @description Webhook endpoint updated. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1392,6 +1447,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1401,6 +1457,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1410,6 +1467,7 @@ export interface operations {
             /** @description Webhook endpoint was not found for this API client. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1419,6 +1477,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1442,6 +1501,7 @@ export interface operations {
             /** @description Webhook endpoint secret rotated. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1451,6 +1511,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1460,6 +1521,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1469,6 +1531,7 @@ export interface operations {
             /** @description Webhook endpoint was not found for this API client. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1492,6 +1555,7 @@ export interface operations {
             /** @description Test delivery queued. */
             202: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1501,6 +1565,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1510,6 +1575,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1519,6 +1585,7 @@ export interface operations {
             /** @description Webhook endpoint was not found for this API client. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1552,6 +1619,7 @@ export interface operations {
             /** @description Paginated leads response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1561,6 +1629,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1570,6 +1639,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1579,6 +1649,7 @@ export interface operations {
             /** @description Query parameters failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1588,6 +1659,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -1615,6 +1687,7 @@ export interface operations {
             /** @description Lead detail response. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1624,6 +1697,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1633,6 +1707,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1642,6 +1717,7 @@ export interface operations {
             /** @description Lead was not found in the API client's organization. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1651,6 +1727,7 @@ export interface operations {
             /** @description Per-client rate limit exceeded. */
             429: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     /** @description Seconds to wait before retrying. */
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
@@ -1682,6 +1759,7 @@ export interface operations {
             /** @description Lead updated. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1691,6 +1769,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1700,6 +1779,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1709,6 +1789,7 @@ export interface operations {
             /** @description Lead was not found in the API client's organization. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1718,6 +1799,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1745,6 +1827,7 @@ export interface operations {
             /** @description Existing lead updated. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1754,6 +1837,7 @@ export interface operations {
             /** @description New lead created. */
             201: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1763,6 +1847,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1772,6 +1857,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1781,6 +1867,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1804,6 +1891,7 @@ export interface operations {
             /** @description Lead custom field definitions. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1813,6 +1901,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1822,6 +1911,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1846,6 +1936,7 @@ export interface operations {
             /** @description Lead custom field created. */
             201: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1855,6 +1946,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1864,6 +1956,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1873,6 +1966,7 @@ export interface operations {
             /** @description A custom field with this key already exists. */
             409: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1882,6 +1976,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1909,6 +2004,7 @@ export interface operations {
             /** @description Lead custom field updated. */
             200: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1918,6 +2014,7 @@ export interface operations {
             /** @description Bearer token is missing, invalid, or expired. */
             401: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1927,6 +2024,7 @@ export interface operations {
             /** @description Bearer token does not include the required scope. */
             403: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1936,6 +2034,7 @@ export interface operations {
             /** @description Custom field was not found in the API client's organization. */
             404: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1945,6 +2044,7 @@ export interface operations {
             /** @description Request body failed validation. */
             422: {
                 headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {

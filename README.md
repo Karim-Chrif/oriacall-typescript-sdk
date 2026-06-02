@@ -354,8 +354,9 @@ Options: `UploadCallInput`
 | `lead.email` | `string \| null` | Optional lead email. |
 | `lead.phone` | `string \| null` | Optional lead phone. |
 | `lead.customFields` | `Record<string, unknown>` | Optional organization-defined lead custom fields. |
-| `audio.file` | `Blob` | Required audio file blob. In Node, use `new Blob([buffer], { type: "audio/mpeg" })`. |
+| `audio.file` | `Blob \| ArrayBuffer \| Uint8Array` | Required audio file data. In Node, a `Buffer` from `readFile()` can be passed directly. |
 | `audio.filename` | `string` | Optional filename sent in multipart upload. |
+| `audio.contentType` | `string` | Optional MIME type, for example `audio/mpeg`. |
 
 ```ts
 import { readFile } from "node:fs/promises";
@@ -381,8 +382,9 @@ const response = await vuevox.calls.upload({
     },
   },
   audio: {
-    file: new Blob([buffer], { type: "audio/mpeg" }),
+    file: buffer,
     filename: "call.mp3",
+    contentType: "audio/mpeg",
   },
 });
 
@@ -782,6 +784,7 @@ invalid_scope
 insufficient_scope
 rate_limited
 invalid_request
+internal_error
 call_not_found
 call_external_id_conflict
 analysis_already_queued

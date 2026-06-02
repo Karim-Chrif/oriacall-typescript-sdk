@@ -54,8 +54,9 @@ export interface ListCallsOptions extends ListSpacesOptions {
 export interface UploadCallInput extends CallUploadMetadata {
   idempotencyKey: string;
   audio: {
-    file: Blob;
+    file: Blob | ArrayBuffer | Uint8Array;
     filename?: string;
+    contentType?: string;
   };
 }
 
@@ -198,7 +199,7 @@ export function createVueVoxClient(options: VueVoxClientOptions) {
     const { audio, idempotencyKey, ...metadata } = input;
     const formData = new FormData();
     formData.set("metadata", JSON.stringify(metadata));
-    formData.set("audioFile", audio.file, audio.filename ?? "call-audio");
+    formData.set("audioFile", toUploadBlob(audio.file, audio.contentType), audio.filename ?? "call-audio");
 
     return apiMultipart<CallResponse>("POST", "/v1/calls", formData, {
       "Idempotency-Key": idempotencyKey,
@@ -538,6 +539,14 @@ function withMetadata<T>(data: T, response: Response, requestId: string | undefi
     requestId,
     status: response.status,
   };
+}
+
+function toUploadBlob(file: Blob | ArrayBuffer | Uint8Array, contentType?: string): Blob {
+  if (file instanceof Blob) {
+    return contentType && file.type !== contentType ? new Blob([file], { type: contentType }) : file;
+  }
+
+  return new Blob([file as BlobPart], { type: contentType });
 }
 
 function notifyResponse(
