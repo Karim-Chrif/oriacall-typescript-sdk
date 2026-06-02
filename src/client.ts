@@ -6,7 +6,7 @@ import type { components, paths } from "./generated/schema.js";
 type TokenResponse = components["schemas"]["TokenResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
 export type HelloResponse = components["schemas"]["HelloResponse"];
-export type SpacesListResponse = components["schemas"]["SpacesListResponse"];
+export type ObjectivesListResponse = components["schemas"]["ObjectivesListResponse"];
 export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 export type CallsListResponse = components["schemas"]["CallsListResponse"];
 export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
@@ -28,7 +28,7 @@ export type WebhookTestResponse = components["schemas"]["WebhookTestResponse"];
 export type WebhookEventPayload = components["schemas"]["WebhookEventPayload"];
 export type LeadUpsertRequest = components["schemas"]["LeadUpsertRequest"];
 export type LeadUpdateRequest = components["schemas"]["LeadUpdateRequest"];
-export type Space = components["schemas"]["Space"];
+export type Objective = components["schemas"]["Objective"];
 export type Agent = components["schemas"]["Agent"];
 export type CallSummary = components["schemas"]["CallSummary"];
 export type Lead = components["schemas"]["Lead"];
@@ -37,13 +37,13 @@ export type LeadCustomField = components["schemas"]["LeadCustomField"];
 export type CustomFieldFilterValue = string | number | boolean | { eq?: string | number | boolean; gt?: string | number; gte?: string | number; lt?: string | number; lte?: string | number; before?: string; after?: string; contains?: string };
 export type CustomFieldFilters = Record<string, CustomFieldFilterValue>;
 
-export interface ListSpacesOptions {
+export interface ListObjectivesOptions {
   limit?: number;
   cursor?: string;
 }
 
-export interface ListCallsOptions extends ListSpacesOptions {
-  spaceId?: string;
+export interface ListCallsOptions extends ListObjectivesOptions {
+  objectiveId?: string;
   leadId?: string;
   agentId?: string;
   createdAfter?: string;
@@ -65,12 +65,12 @@ export interface WaitForAnalysisOptions {
   timeoutMs?: number;
 }
 
-export interface ListAgentsOptions extends ListSpacesOptions {
-  spaceId?: string;
+export interface ListAgentsOptions extends ListObjectivesOptions {
+  objectiveId?: string;
 }
 
-export interface ListLeadsOptions extends ListSpacesOptions {
-  spaceId?: string;
+export interface ListLeadsOptions extends ListObjectivesOptions {
+  objectiveId?: string;
   createdAfter?: string;
   createdBefore?: string;
   customFields?: CustomFieldFilters;
@@ -80,7 +80,7 @@ export interface ListLeadCustomFieldsOptions {
   includeArchived?: boolean;
 }
 
-export interface ListWebhookEndpointsOptions extends ListSpacesOptions {}
+export interface ListWebhookEndpointsOptions extends ListObjectivesOptions {}
 
 export interface VerifyWebhookSignatureInput {
   body: string;
@@ -136,7 +136,7 @@ interface PaginatedResponse<T> {
   };
 }
 
-type ListFunction<TItem, TOptions extends ListSpacesOptions> = (options?: TOptions) => Promise<OriacallApiResponse<PaginatedResponse<TItem>>>;
+type ListFunction<TItem, TOptions extends ListObjectivesOptions> = (options?: TOptions) => Promise<OriacallApiResponse<PaginatedResponse<TItem>>>;
 
 export function createOriacallClient(options: OriacallClientOptions) {
   const baseUrl = trimTrailingSlash(options.baseUrl ?? "https://api.oriacall.com");
@@ -179,8 +179,8 @@ export function createOriacallClient(options: OriacallClientOptions) {
     return apiGet<HelloResponse>("/v1/hello");
   }
 
-  async function listSpaces(listOptions: ListSpacesOptions = {}): Promise<OriacallApiResponse<SpacesListResponse>> {
-    return apiGet<SpacesListResponse>("/v1/spaces", listOptions);
+  async function listObjectives(listOptions: ListObjectivesOptions = {}): Promise<OriacallApiResponse<ObjectivesListResponse>> {
+    return apiGet<ObjectivesListResponse>("/v1/objectives", listOptions);
   }
 
   async function listAgents(listOptions: ListAgentsOptions = {}): Promise<OriacallApiResponse<AgentsListResponse>> {
@@ -398,9 +398,9 @@ export function createOriacallClient(options: OriacallClientOptions) {
     hello: {
       get: getHello,
     },
-    spaces: {
-      list: listSpaces,
-      paginate: (listOptions: ListSpacesOptions = {}) => paginate(listSpaces, listOptions),
+    objectives: {
+      list: listObjectives,
+      paginate: (listOptions: ListObjectivesOptions = {}) => paginate(listObjectives, listOptions),
     },
     agents: {
       list: listAgents,
@@ -566,7 +566,7 @@ function notifyResponse(
   });
 }
 
-async function* paginate<TItem, TOptions extends ListSpacesOptions>(
+async function* paginate<TItem, TOptions extends ListObjectivesOptions>(
   list: ListFunction<TItem, TOptions>,
   listOptions: TOptions,
 ): AsyncGenerator<TItem> {

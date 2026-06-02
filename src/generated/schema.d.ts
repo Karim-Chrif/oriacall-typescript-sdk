@@ -44,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/spaces": {
+    "/v1/objectives": {
         parameters: {
             query?: never;
             header?: never;
@@ -52,10 +52,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List organization spaces
-         * @description Returns spaces for the API client's organization using cursor pagination.
+         * List organization objectives
+         * @description Returns objectives for the API client's organization using cursor pagination.
          */
-        get: operations["listSpaces"];
+        get: operations["listObjectives"];
         put?: never;
         post?: never;
         delete?: never;
@@ -73,7 +73,7 @@ export interface paths {
         };
         /**
          * List organization agents
-         * @description Returns agents for the API client's organization using cursor pagination. Optionally filter agents by space ID.
+         * @description Returns agents for the API client's organization using cursor pagination. Optionally filter agents by objective ID.
          */
         get: operations["listAgents"];
         put?: never;
@@ -99,7 +99,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a call and optionally queue analysis
-         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed space, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by an Oriacall superadmin and defaults to 20 MB.
+         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed objective, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by an Oriacall superadmin and defaults to 20 MB.
          */
         post: operations["uploadCall"];
         delete?: never;
@@ -348,8 +348,8 @@ export interface components {
             client_id: string;
             client_secret: string;
             /**
-             * @description Space-separated scopes requested for the access token.
-             * @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write
+             * @description Objective-separated scopes requested for the access token.
+             * @example hello:read objectives:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write
              */
             scope?: string;
         };
@@ -359,14 +359,14 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read spaces:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write */
+            /** @example hello:read objectives:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write */
             scope: string;
         };
         HelloResponse: {
             /** @example Hello world */
             message: string;
         };
-        Space: {
+        Objective: {
             /** Format: uuid */
             id: string;
             /** @example Sales Team */
@@ -378,8 +378,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        SpacesListResponse: {
-            data: components["schemas"]["Space"][];
+        ObjectivesListResponse: {
+            data: components["schemas"]["Objective"][];
             pagination: components["schemas"]["CursorPagination"];
         };
         Agent: {
@@ -389,7 +389,7 @@ export interface components {
             externalId: string | null;
             /** @example Morgan Agent */
             name: string;
-            spaces: components["schemas"]["ResourceSummary"][];
+            objectives: components["schemas"]["ResourceSummary"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -425,7 +425,7 @@ export interface components {
             id: string;
             /** @description Optional ID from an external system. */
             externalId: string | null;
-            space: components["schemas"]["ResourceSummary"];
+            objective: components["schemas"]["ResourceSummary"];
             lead: components["schemas"]["LeadSummary"];
             agent: components["schemas"]["AgentSummary"];
             /** @description Call duration in seconds. */
@@ -473,9 +473,9 @@ export interface components {
             externalId?: string | null;
             /**
              * Format: uuid
-             * @description Existing Oriacall space ID. Spaces are managed in the Oriacall platform.
+             * @description Existing Oriacall objective ID. Objectives are managed in the Oriacall platform.
              */
-            spaceId: string;
+            objectiveId: string;
             /**
              * @description When true or omitted, queues analysis immediately after upload. When false, queue later with queueCallAnalysis.
              * @default true
@@ -514,7 +514,7 @@ export interface components {
             email: string | null;
             phone: string | null;
             customFields: components["schemas"]["CustomFields"];
-            space: components["schemas"]["ResourceSummary"];
+            objective: components["schemas"]["ResourceSummary"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -534,7 +534,7 @@ export interface components {
             email?: string | null;
             phone?: string | null;
             /** Format: uuid */
-            spaceId?: string | null;
+            objectiveId?: string | null;
             customFields?: components["schemas"]["CustomFields"];
         };
         LeadUpdateRequest: {
@@ -544,7 +544,7 @@ export interface components {
             email?: string | null;
             phone?: string | null;
             /** Format: uuid */
-            spaceId?: string | null;
+            objectiveId?: string | null;
             customFields?: components["schemas"]["CustomFields"];
         };
         /** @description Lead custom field values keyed by custom field key. */
@@ -813,10 +813,10 @@ export interface operations {
             };
         };
     };
-    listSpaces: {
+    listObjectives: {
         parameters: {
             query?: {
-                /** @description Number of spaces to return. Defaults to 50. Maximum is 100. */
+                /** @description Number of objectives to return. Defaults to 50. Maximum is 100. */
                 limit?: number;
                 /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
                 cursor?: string;
@@ -827,14 +827,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Paginated spaces response. */
+            /** @description Paginated objectives response. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SpacesListResponse"];
+                    "application/json": components["schemas"]["ObjectivesListResponse"];
                 };
             };
             /** @description Bearer token is missing, invalid, or expired. */
@@ -890,8 +890,8 @@ export interface operations {
                 limit?: number;
                 /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
                 cursor?: string;
-                /** @description Filter agents assigned to a space ID. */
-                spaceId?: string;
+                /** @description Filter agents assigned to a objective ID. */
+                objectiveId?: string;
             };
             header?: never;
             path?: never;
@@ -962,8 +962,8 @@ export interface operations {
                 limit?: number;
                 /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
                 cursor?: string;
-                /** @description Filter calls to a space ID. */
-                spaceId?: string;
+                /** @description Filter calls to a objective ID. */
+                objectiveId?: string;
                 /** @description Filter calls to a lead ID. */
                 leadId?: string;
                 /** @description Filter calls to an agent ID. */
@@ -1601,8 +1601,8 @@ export interface operations {
                 limit?: number;
                 /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
                 cursor?: string;
-                /** @description Filter leads to a space ID. */
-                spaceId?: string;
+                /** @description Filter leads to a objective ID. */
+                objectiveId?: string;
                 /** @description Return leads created at or after this timestamp. */
                 createdAfter?: string;
                 /** @description Return leads created at or before this timestamp. */

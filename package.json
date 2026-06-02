@@ -1,6 +1,6 @@
 {
   "name": "@oriacall/sdk",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "TypeScript SDK for the Oriacall Developer API.",
   "type": "module",
   "main": "./dist/index.js",

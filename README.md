@@ -28,7 +28,7 @@ Available scopes:
 
 ```text
 hello:read
-spaces:read
+objectives:read
 agents:read
 calls:read
 calls:write
@@ -49,7 +49,7 @@ import { createOriacallClient } from "@oriacall/sdk";
 const oriacall = createOriacallClient({
   clientId: process.env.ORIACALL_CLIENT_ID!,
   clientSecret: process.env.ORIACALL_CLIENT_SECRET!,
-  scope: ["hello:read", "spaces:read", "agents:read", "calls:read", "leads:read"],
+  scope: ["hello:read", "objectives:read", "agents:read", "calls:read", "leads:read"],
 });
 
 const hello = await oriacall.hello.get();
@@ -89,7 +89,7 @@ Options:
 | `clientId` | `string` | Yes | Developer API client ID. |
 | `clientSecret` | `string` | Yes | Developer API client secret. Keep this server-side. |
 | `baseUrl` | `string` | No | API base URL. Defaults to `https://api.oriacall.com`. |
-| `scope` | `string \| string[]` | No | Space-separated string or array of requested token scopes. If omitted, the token request uses all scopes granted to the client. |
+| `scope` | `string \| string[]` | No | Objective-separated string or array of requested token scopes. If omitted, the token request uses all scopes granted to the client. |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation. Defaults to global `fetch`. |
 | `onResponse` | `(event: OriacallResponseEvent) => void` | No | Called for every SDK-managed HTTP response, including token requests. |
 | `retries` | `number` | No | Retry count for token requests and GET endpoints. Defaults to `0`. |
@@ -101,13 +101,13 @@ Returns a namespaced client:
 ```ts
 oriacall.getAccessToken();
 oriacall.hello.get();
-oriacall.spaces.list();
-oriacall.spaces.paginate();
+oriacall.objectives.list();
+oriacall.objectives.paginate();
 oriacall.agents.list();
 oriacall.agents.paginate();
 oriacall.calls.list();
 oriacall.calls.get("call-id");
-oriacall.calls.upload({ idempotencyKey: "crm-call-123", spaceId: "space-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
+oriacall.calls.upload({ idempotencyKey: "crm-call-123", objectiveId: "objective-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
 oriacall.calls.queueAnalysis("call-id");
 oriacall.calls.waitForAnalysis("call-id");
 oriacall.calls.paginate();
@@ -172,7 +172,7 @@ for await (const call of oriacall.calls.paginate({ limit: 50 })) {
 }
 ```
 
-Pagination helpers are available for `spaces`, `agents`, `calls`, `leads`, and `webhooks.endpoints`.
+Pagination helpers are available for `objectives`, `agents`, `calls`, `leads`, and `webhooks.endpoints`.
 
 ## Methods
 
@@ -199,39 +199,39 @@ console.log(response.data.message);
 
 Returns: `Promise<OriacallApiResponse<HelloResponse>>`.
 
-### `oriacall.spaces.list(options?)`
+### `oriacall.objectives.list(options?)`
 
-Lists organization spaces.
+Lists organization objectives.
 
-Required scope: `spaces:read`.
+Required scope: `objectives:read`.
 
-Options: `ListSpacesOptions`
+Options: `ListObjectivesOptions`
 
 ```ts
-const response = await oriacall.spaces.list({ limit: 50 });
+const response = await oriacall.objectives.list({ limit: 50 });
 
-for (const space of response.data.data) {
-  console.log(space.id, space.name);
+for (const objective of response.data.data) {
+  console.log(objective.id, objective.name);
 }
 ```
 
-Returns: `Promise<OriacallApiResponse<SpacesListResponse>>`.
+Returns: `Promise<OriacallApiResponse<ObjectivesListResponse>>`.
 
-### `oriacall.spaces.paginate(options?)`
+### `oriacall.objectives.paginate(options?)`
 
-Iterates organization spaces across all pages.
+Iterates organization objectives across all pages.
 
-Required scope: `spaces:read`.
+Required scope: `objectives:read`.
 
-Options: `ListSpacesOptions`
+Options: `ListObjectivesOptions`
 
 ```ts
-for await (const space of oriacall.spaces.paginate({ limit: 100 })) {
-  console.log(space.id, space.name);
+for await (const objective of oriacall.objectives.paginate({ limit: 100 })) {
+  console.log(objective.id, objective.name);
 }
 ```
 
-Returns: `AsyncGenerator<Space>`.
+Returns: `AsyncGenerator<Objective>`.
 
 ### `oriacall.agents.list(options?)`
 
@@ -247,10 +247,10 @@ Options: `ListAgentsOptions`
 | --- | --- | --- |
 | `limit` | `number` | Number of agents to return. Defaults to `50`; maximum is `100`. |
 | `cursor` | `string` | Cursor from the previous response. |
-| `spaceId` | `string` | Optional space ID filter. |
+| `objectiveId` | `string` | Optional objective ID filter. |
 
 ```ts
-const response = await oriacall.agents.list({ limit: 50, spaceId: "space-id" });
+const response = await oriacall.agents.list({ limit: 50, objectiveId: "objective-id" });
 
 for (const agent of response.data.data) {
   console.log(agent.id, agent.externalId, agent.name);
@@ -268,7 +268,7 @@ Required scope: `agents:read`.
 Options: `ListAgentsOptions`
 
 ```ts
-for await (const agent of oriacall.agents.paginate({ spaceId: "space-id" })) {
+for await (const agent of oriacall.agents.paginate({ objectiveId: "objective-id" })) {
   console.log(agent.id, agent.externalId, agent.name);
 }
 ```
@@ -287,7 +287,7 @@ Options: `ListCallsOptions`
 | --- | --- | --- |
 | `limit` | `number` | Number of calls to return. Defaults to `50`; maximum is `100`. |
 | `cursor` | `string` | Cursor from the previous response. |
-| `spaceId` | `string` | Optional space ID filter. |
+| `objectiveId` | `string` | Optional objective ID filter. |
 | `leadId` | `string` | Optional lead ID filter. |
 | `agentId` | `string` | Optional agent ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for call creation time. |
@@ -297,7 +297,7 @@ Options: `ListCallsOptions`
 ```ts
 const response = await oriacall.calls.list({
   limit: 50,
-  spaceId: "space-id",
+  objectiveId: "objective-id",
   createdAfter: "2026-01-01T00:00:00.000Z",
   leadCustomFields: {
     crm_stage: "qualified",
@@ -326,13 +326,13 @@ Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
 
 ### `oriacall.calls.upload(input)`
 
-Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call in an existing platform-managed space, and optionally queues analysis.
+Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call in an existing platform-managed objective, and optionally queues analysis.
 
 Required scope: `calls:write`.
 
 The API requires an idempotency key for uploads. Reusing the same `idempotencyKey` with the same request returns the original response; reusing it with different metadata or audio returns an `idempotency_key_conflict` error.
 
-Spaces are managed in Oriacall. Use `oriacall.spaces.list()` to obtain the `spaceId`.
+Objectives are managed in Oriacall. Use `oriacall.objectives.list()` to obtain the `objectiveId`.
 
 The maximum audio upload size is configured by an Oriacall superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
 
@@ -341,7 +341,7 @@ Options: `UploadCallInput`
 | Option | Type | Description |
 | --- | --- | --- |
 | `idempotencyKey` | `string` | Required unique key for safe retries. |
-| `spaceId` | `string` | Required existing Oriacall space ID. |
+| `objectiveId` | `string` | Required existing Oriacall objective ID. |
 | `externalId` | `string \| null` | Optional call ID from your system. |
 | `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
 | `agent.externalId` | `string` | Required agent ID from your system. |
@@ -366,7 +366,7 @@ const buffer = await readFile("./call.mp3");
 const response = await oriacall.calls.upload({
   idempotencyKey: "crm-call-789",
   externalId: "crm-call-789",
-  spaceId: "space-id",
+  objectiveId: "objective-id",
   queueAnalysis: true,
   agent: {
     externalId: "agent-123",
@@ -456,7 +456,7 @@ Options: `ListLeadsOptions`
 | --- | --- | --- |
 | `limit` | `number` | Number of leads to return. Defaults to `50`; maximum is `100`. |
 | `cursor` | `string` | Cursor from the previous response. |
-| `spaceId` | `string` | Optional space ID filter. |
+| `objectiveId` | `string` | Optional objective ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for lead creation time. |
 | `createdBefore` | `string` | Optional ISO 8601 upper bound for lead creation time. |
 | `customFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields. |
@@ -464,7 +464,7 @@ Options: `ListLeadsOptions`
 ```ts
 const response = await oriacall.leads.list({
   limit: 50,
-  spaceId: "space-id",
+  objectiveId: "objective-id",
   customFields: {
     crm_stage: "qualified",
     deal_value: { gte: 10000 },
@@ -872,10 +872,10 @@ import type {
   ListCallsOptions,
   ListLeadCustomFieldsOptions,
   ListLeadsOptions,
-  ListSpacesOptions,
+  ListObjectivesOptions,
   ListWebhookEndpointsOptions,
-  Space,
-  SpacesListResponse,
+  Objective,
+  ObjectivesListResponse,
   UploadCallInput,
   VerifyWebhookSignatureInput,
   OriacallApiResponse,
