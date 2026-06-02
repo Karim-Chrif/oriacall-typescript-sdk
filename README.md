@@ -29,6 +29,8 @@ Available scopes:
 ```text
 hello:read
 objectives:read
+objectives:write
+objective_custom_fields:manage
 agents:read
 calls:read
 calls:write
@@ -89,7 +91,7 @@ Options:
 | `clientId` | `string` | Yes | Developer API client ID. |
 | `clientSecret` | `string` | Yes | Developer API client secret. Keep this server-side. |
 | `baseUrl` | `string` | No | API base URL. Defaults to `https://api.oriacall.com`. |
-| `scope` | `string \| string[]` | No | Objective-separated string or array of requested token scopes. If omitted, the token request uses all scopes granted to the client. |
+| `scope` | `string \| string[]` | No | Space-separated string or array of requested token scopes. If omitted, the token request uses all scopes granted to the client. |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation. Defaults to global `fetch`. |
 | `onResponse` | `(event: OriacallResponseEvent) => void` | No | Called for every SDK-managed HTTP response, including token requests. |
 | `retries` | `number` | No | Retry count for token requests and GET endpoints. Defaults to `0`. |
@@ -102,7 +104,11 @@ Returns a namespaced client:
 oriacall.getAccessToken();
 oriacall.hello.get();
 oriacall.objectives.list();
+oriacall.objectives.update("objective-id", { customFields: { region: "north" } });
 oriacall.objectives.paginate();
+oriacall.objectiveCustomFields.list();
+oriacall.objectiveCustomFields.create({ key: "region", label: "Region", type: "select", options: ["north", "south"] });
+oriacall.objectiveCustomFields.update("region", { label: "Sales Region" });
 oriacall.agents.list();
 oriacall.agents.paginate();
 oriacall.calls.list();
@@ -203,6 +209,8 @@ Returns: `Promise<OriacallApiResponse<HelloResponse>>`.
 
 Lists organization objectives.
 
+Objective records include `customFields`, an object keyed by organization-defined objective custom field keys.
+
 Required scope: `objectives:read`.
 
 Options: `ListObjectivesOptions`
@@ -216,6 +224,38 @@ for (const objective of response.data.data) {
 ```
 
 Returns: `Promise<OriacallApiResponse<ObjectivesListResponse>>`.
+
+Options include `limit`, `cursor`, and `objectiveCustomFields` filters. `objectiveCustomFields` maps to the API's `objectiveCustom[...]` query parameters.
+
+```ts
+await oriacall.objectives.list({
+  objectiveCustomFields: {
+    region: "north",
+    priority: { gte: 5 },
+  },
+});
+```
+
+### `oriacall.objectives.update(objectiveId, input)`
+
+Updates custom field values for an objective. Send `null` to clear a field.
+
+Required scope: `objectives:write`.
+
+Input: `ObjectiveUpdateRequest`
+
+```ts
+const response = await oriacall.objectives.update("objective-id", {
+  customFields: {
+    region: "north",
+    priority: 10,
+  },
+});
+
+console.log(response.data.data.customFields);
+```
+
+Returns: `Promise<OriacallApiResponse<ObjectiveResponse>>`.
 
 ### `oriacall.objectives.paginate(options?)`
 
@@ -611,6 +651,64 @@ await oriacall.leadCustomFields.update("crm_stage", {
 
 Returns: `Promise<OriacallApiResponse<LeadCustomFieldResponse>>`.
 
+### `oriacall.objectiveCustomFields.list(options?)`
+
+Lists organization objective custom field definitions.
+
+Required scope: `objectives:read`.
+
+Options: `ListObjectiveCustomFieldsOptions`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `includeArchived` | `boolean` | Include archived definitions. Defaults to `false`. |
+
+```ts
+const response = await oriacall.objectiveCustomFields.list();
+console.log(response.data.data);
+```
+
+Returns: `Promise<OriacallApiResponse<ObjectiveCustomFieldsListResponse>>`.
+
+### `oriacall.objectiveCustomFields.create(input)`
+
+Creates an objective custom field definition. Supported types are `text`, `number`, `boolean`, `date`, `datetime`, `select`, and `multi_select`.
+
+Required scope: `objective_custom_fields:manage`.
+
+Input: `ObjectiveCustomFieldCreateRequest`
+
+```ts
+const response = await oriacall.objectiveCustomFields.create({
+  key: "region",
+  label: "Region",
+  type: "select",
+  options: ["north", "south"],
+  isFilterable: true,
+});
+
+console.log(response.data.data.key);
+```
+
+Returns: `Promise<OriacallApiResponse<ObjectiveCustomFieldResponse>>`.
+
+### `oriacall.objectiveCustomFields.update(key, input)`
+
+Updates mutable metadata for an objective custom field definition. Field keys and types are immutable.
+
+Required scope: `objective_custom_fields:manage`.
+
+Input: `ObjectiveCustomFieldUpdateRequest`
+
+```ts
+await oriacall.objectiveCustomFields.update("region", {
+  label: "Sales Region",
+  archived: false,
+});
+```
+
+Returns: `Promise<OriacallApiResponse<ObjectiveCustomFieldResponse>>`.
+
 ### `oriacall.webhooks.endpoints.list(options?)`
 
 Lists webhook endpoints for the authenticated API client.
@@ -872,9 +970,17 @@ import type {
   ListCallsOptions,
   ListLeadCustomFieldsOptions,
   ListLeadsOptions,
+  ListObjectiveCustomFieldsOptions,
   ListObjectivesOptions,
   ListWebhookEndpointsOptions,
   Objective,
+  ObjectiveCustomField,
+  ObjectiveCustomFieldCreateRequest,
+  ObjectiveCustomFieldResponse,
+  ObjectiveCustomFieldUpdateRequest,
+  ObjectiveCustomFieldsListResponse,
+  ObjectiveResponse,
+  ObjectiveUpdateRequest,
   ObjectivesListResponse,
   UploadCallInput,
   VerifyWebhookSignatureInput,

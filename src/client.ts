@@ -7,6 +7,8 @@ type TokenResponse = components["schemas"]["TokenResponse"];
 type ErrorResponse = components["schemas"]["ErrorResponse"];
 export type HelloResponse = components["schemas"]["HelloResponse"];
 export type ObjectivesListResponse = components["schemas"]["ObjectivesListResponse"];
+export type ObjectiveResponse = components["schemas"]["ObjectiveResponse"];
+export type ObjectiveUpdateRequest = components["schemas"]["ObjectiveUpdateRequest"];
 export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 export type CallsListResponse = components["schemas"]["CallsListResponse"];
 export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
@@ -18,6 +20,10 @@ export type LeadCustomFieldsListResponse = components["schemas"]["LeadCustomFiel
 export type LeadCustomFieldResponse = components["schemas"]["LeadCustomFieldResponse"];
 export type LeadCustomFieldCreateRequest = components["schemas"]["LeadCustomFieldCreateRequest"];
 export type LeadCustomFieldUpdateRequest = components["schemas"]["LeadCustomFieldUpdateRequest"];
+export type ObjectiveCustomFieldsListResponse = components["schemas"]["ObjectiveCustomFieldsListResponse"];
+export type ObjectiveCustomFieldResponse = components["schemas"]["ObjectiveCustomFieldResponse"];
+export type ObjectiveCustomFieldCreateRequest = components["schemas"]["ObjectiveCustomFieldCreateRequest"];
+export type ObjectiveCustomFieldUpdateRequest = components["schemas"]["ObjectiveCustomFieldUpdateRequest"];
 export type WebhookEndpoint = components["schemas"]["WebhookEndpoint"];
 export type WebhookEndpointCreateRequest = components["schemas"]["WebhookEndpointCreateRequest"];
 export type WebhookEndpointUpdateRequest = components["schemas"]["WebhookEndpointUpdateRequest"];
@@ -33,6 +39,7 @@ export type Agent = components["schemas"]["Agent"];
 export type CallSummary = components["schemas"]["CallSummary"];
 export type Lead = components["schemas"]["Lead"];
 export type LeadCustomField = components["schemas"]["LeadCustomField"];
+export type ObjectiveCustomField = components["schemas"]["ObjectiveCustomField"];
 
 export type CustomFieldFilterValue = string | number | boolean | { eq?: string | number | boolean; gt?: string | number; gte?: string | number; lt?: string | number; lte?: string | number; before?: string; after?: string; contains?: string };
 export type CustomFieldFilters = Record<string, CustomFieldFilterValue>;
@@ -40,6 +47,7 @@ export type CustomFieldFilters = Record<string, CustomFieldFilterValue>;
 export interface ListObjectivesOptions {
   limit?: number;
   cursor?: string;
+  objectiveCustomFields?: CustomFieldFilters;
 }
 
 export interface ListCallsOptions extends ListObjectivesOptions {
@@ -77,6 +85,10 @@ export interface ListLeadsOptions extends ListObjectivesOptions {
 }
 
 export interface ListLeadCustomFieldsOptions {
+  includeArchived?: boolean;
+}
+
+export interface ListObjectiveCustomFieldsOptions {
   includeArchived?: boolean;
 }
 
@@ -183,6 +195,10 @@ export function createOriacallClient(options: OriacallClientOptions) {
     return apiGet<ObjectivesListResponse>("/v1/objectives", listOptions);
   }
 
+  async function updateObjective(objectiveId: string, input: ObjectiveUpdateRequest): Promise<OriacallApiResponse<ObjectiveResponse>> {
+    return apiJson<ObjectiveResponse>("PATCH", `/v1/objectives/${encodeURIComponent(objectiveId)}`, input);
+  }
+
   async function listAgents(listOptions: ListAgentsOptions = {}): Promise<OriacallApiResponse<AgentsListResponse>> {
     return apiGet<AgentsListResponse>("/v1/agents", listOptions);
   }
@@ -257,6 +273,18 @@ export function createOriacallClient(options: OriacallClientOptions) {
 
   async function updateLeadCustomField(key: string, input: LeadCustomFieldUpdateRequest): Promise<OriacallApiResponse<LeadCustomFieldResponse>> {
     return apiJson<LeadCustomFieldResponse>("PATCH", `/v1/lead-custom-fields/${encodeURIComponent(key)}`, input);
+  }
+
+  async function listObjectiveCustomFields(listOptions: ListObjectiveCustomFieldsOptions = {}): Promise<OriacallApiResponse<ObjectiveCustomFieldsListResponse>> {
+    return apiGet<ObjectiveCustomFieldsListResponse>("/v1/objective-custom-fields", listOptions);
+  }
+
+  async function createObjectiveCustomField(input: ObjectiveCustomFieldCreateRequest): Promise<OriacallApiResponse<ObjectiveCustomFieldResponse>> {
+    return apiJson<ObjectiveCustomFieldResponse>("POST", "/v1/objective-custom-fields", input);
+  }
+
+  async function updateObjectiveCustomField(key: string, input: ObjectiveCustomFieldUpdateRequest): Promise<OriacallApiResponse<ObjectiveCustomFieldResponse>> {
+    return apiJson<ObjectiveCustomFieldResponse>("PATCH", `/v1/objective-custom-fields/${encodeURIComponent(key)}`, input);
   }
 
   async function listWebhookEndpoints(listOptions: ListWebhookEndpointsOptions = {}): Promise<OriacallApiResponse<WebhookEndpointsListResponse>> {
@@ -400,6 +428,7 @@ export function createOriacallClient(options: OriacallClientOptions) {
     },
     objectives: {
       list: listObjectives,
+      update: updateObjective,
       paginate: (listOptions: ListObjectivesOptions = {}) => paginate(listObjectives, listOptions),
     },
     agents: {
@@ -425,6 +454,11 @@ export function createOriacallClient(options: OriacallClientOptions) {
       list: listLeadCustomFields,
       create: createLeadCustomField,
       update: updateLeadCustomField,
+    },
+    objectiveCustomFields: {
+      list: listObjectiveCustomFields,
+      create: createObjectiveCustomField,
+      update: updateObjectiveCustomField,
     },
     webhooks: {
       endpoints: {
@@ -500,7 +534,7 @@ function appendQueryParams(searchParams: URLSearchParams, query: object, prefix?
 }
 
 function queryKey(key: string, prefix?: string): string {
-  const publicKey = key === "customFields" ? "custom" : key === "leadCustomFields" ? "leadCustom" : key;
+  const publicKey = key === "customFields" ? "custom" : key === "leadCustomFields" ? "leadCustom" : key === "objectiveCustomFields" ? "objectiveCustom" : key;
 
   return prefix ? `${prefix}[${publicKey}]` : publicKey;
 }

@@ -64,6 +64,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/objectives/{objectiveId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update objective custom fields
+         * @description Updates custom field values for one objective in the API client's organization. Send null or an empty string to clear a field.
+         */
+        patch: operations["updateObjective"];
+        trace?: never;
+    };
     "/v1/agents": {
         parameters: {
             query?: never;
@@ -294,6 +314,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/objective-custom-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List objective custom field definitions
+         * @description Returns objective custom field definitions for the API client's organization.
+         */
+        get: operations["listObjectiveCustomFields"];
+        put?: never;
+        /**
+         * Create an objective custom field definition
+         * @description Creates a typed objective custom field definition for objective metadata, platform forms, and API payloads.
+         */
+        post: operations["createObjectiveCustomField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/objective-custom-fields/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update an objective custom field definition
+         * @description Updates mutable metadata for an objective custom field definition. Keys and types are immutable.
+         */
+        patch: operations["updateObjectiveCustomField"];
+        trace?: never;
+    };
     "/v1/lead-custom-fields": {
         parameters: {
             query?: never;
@@ -359,7 +423,7 @@ export interface components {
             token_type: "Bearer";
             /** @example 3600 */
             expires_in: number;
-            /** @example hello:read objectives:read agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write */
+            /** @example hello:read objectives:read objectives:write objective_custom_fields:manage agents:read calls:read calls:write leads:read leads:write lead_custom_fields:manage webhooks:read webhooks:write */
             scope: string;
         };
         HelloResponse: {
@@ -373,10 +437,17 @@ export interface components {
             name: string;
             /** @example Workspace for inbound sales calls. */
             description: string | null;
+            customFields: components["schemas"]["CustomFields"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ObjectiveResponse: {
+            data: components["schemas"]["Objective"];
+        };
+        ObjectiveUpdateRequest: {
+            customFields: components["schemas"]["CustomFields"];
         };
         ObjectivesListResponse: {
             data: components["schemas"]["Objective"][];
@@ -547,7 +618,7 @@ export interface components {
             objectiveId?: string | null;
             customFields?: components["schemas"]["CustomFields"];
         };
-        /** @description Lead custom field values keyed by custom field key. */
+        /** @description Custom field values keyed by custom field key. */
         CustomFields: {
             [key: string]: string | number | boolean | string[] | null;
         };
@@ -556,6 +627,42 @@ export interface components {
             [key: string]: string | number | boolean | {
                 [key: string]: string | number | boolean;
             };
+        };
+        ObjectiveCustomField: {
+            /** @example region */
+            key: string;
+            /** @example Region */
+            label: string;
+            /** @enum {string} */
+            type: "text" | "number" | "boolean" | "date" | "datetime" | "select" | "multi_select";
+            options: string[];
+            isFilterable: boolean;
+            archived: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ObjectiveCustomFieldsListResponse: {
+            data: components["schemas"]["ObjectiveCustomField"][];
+        };
+        ObjectiveCustomFieldResponse: {
+            data: components["schemas"]["ObjectiveCustomField"];
+        };
+        ObjectiveCustomFieldCreateRequest: {
+            key: string;
+            label: string;
+            /** @enum {string} */
+            type: "text" | "number" | "boolean" | "date" | "datetime" | "select" | "multi_select";
+            options?: string[];
+            /** @default true */
+            isFilterable: boolean;
+        };
+        ObjectiveCustomFieldUpdateRequest: {
+            label?: string;
+            options?: string[];
+            isFilterable?: boolean;
+            archived?: boolean;
         };
         LeadCustomField: {
             /** @example crm_stage */
@@ -820,6 +927,8 @@ export interface operations {
                 limit?: number;
                 /** @description Opaque cursor from the previous response's pagination.nextCursor value. */
                 cursor?: string;
+                /** @description Filter objectives by objective custom fields. Use objectiveCustom[field_key]=value or objectiveCustom[field_key][operator]=value. */
+                objectiveCustom?: components["schemas"]["CustomFieldFilters"];
             };
             header?: never;
             path?: never;
@@ -875,6 +984,74 @@ export interface operations {
                     "Retry-After"?: string;
                     /** @description Request limit per minute for this API client. */
                     "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateObjective: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Objective ID. */
+                objectiveId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectiveUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Objective updated. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectiveResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Objective not found in this organization. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1856,6 +2033,183 @@ export interface operations {
             };
             /** @description Bearer token does not include the required scope. */
             403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listObjectiveCustomFields: {
+        parameters: {
+            query?: {
+                /** @description Include archived field definitions. */
+                includeArchived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Objective custom field definitions. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectiveCustomFieldsListResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createObjectiveCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectiveCustomFieldCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Objective custom field created. */
+            201: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectiveCustomFieldResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description A custom field with this key already exists. */
+            409: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateObjectiveCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Custom field key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectiveCustomFieldUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Objective custom field updated. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectiveCustomFieldResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Custom field not found. */
+            404: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
