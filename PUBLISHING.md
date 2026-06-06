@@ -18,12 +18,14 @@ From the SDK package directory:
 
 ```bash
 npm install
-npx openapi-typescript ../../openapi/openapi.yaml -o src/generated/schema.d.ts
+npx openapi-typescript <path-to-oriacall-openapi.yaml> -o src/generated/schema.d.ts
 npm run typecheck
 npm run build
 npm run pack:dry-run
 npm run publish:dry-run
 ```
+
+When updating the SDK for Developer API contract changes, generate `src/generated/schema.d.ts` from the matching `openapi/openapi.yaml` in the Oriacall application repository before publishing.
 
 Confirm the dry-run tarball includes only expected package files:
 
