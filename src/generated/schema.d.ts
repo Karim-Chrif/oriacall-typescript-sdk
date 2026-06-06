@@ -497,6 +497,12 @@ export interface components {
             /** @description Optional ID from an external system. */
             externalId: string | null;
             objective: components["schemas"]["ResourceSummary"];
+            objectiveHint: components["schemas"]["ResourceSummary"];
+            identifiedObjective: components["schemas"]["ResourceSummary"];
+            /** @description How Oriacall selected the objective: ai, fallback, or hint. */
+            objectiveSelectionSource: string | null;
+            /** Format: float */
+            objectiveIdentificationConfidence: number | null;
             lead: components["schemas"]["LeadSummary"];
             agent: components["schemas"]["AgentSummary"];
             /** @description Call duration in seconds. */
@@ -505,6 +511,8 @@ export interface components {
             sentiment: string | null;
             /** @example completed */
             analysisStatus: string;
+            /** @example objective_pass */
+            analysisStage: string | null;
             /** @example processing */
             queueStatus: string | null;
             /** Format: date-time */
@@ -526,9 +534,19 @@ export interface components {
             objectiveMet: boolean;
             objectiveNotes: string | null;
             detectedTags: string[] | null;
+            /** @description Organization-level tags detected during the audio pass. Hidden global tags are not exposed. */
+            organizationDetectedTags: string[] | null;
+            detectedParams: components["schemas"]["AnalysisParam"][];
+            /** @description Organization-level parameters detected during the audio pass. Hidden global parameters are not exposed. */
+            organizationDetectedParams: components["schemas"]["AnalysisParam"][];
             strengths: string[] | null;
             weaknesses: string[] | null;
         } | null;
+        AnalysisParam: {
+            key: string;
+            label: string;
+            value: string | null;
+        };
         CallsListResponse: {
             data: components["schemas"]["CallSummary"][];
             pagination: components["schemas"]["CursorPagination"];
@@ -544,9 +562,9 @@ export interface components {
             externalId?: string | null;
             /**
              * Format: uuid
-             * @description Existing Oriacall objective ID. Objectives are managed in the Oriacall platform.
+             * @description Optional objective hint. The audio pass can override it; if no objective is identified confidently, the organization fallback objective is used.
              */
-            objectiveId: string;
+            objectiveId?: string | null;
             /**
              * @description When true or omitted, queues analysis immediately after upload. When false, queue later with queueCallAnalysis.
              * @default true

@@ -6,6 +6,8 @@ export type {
   CallResponse,
   CallsListResponse,
   CallSummary,
+  CallAnalysis,
+  AnalysisParam,
   CallUploadMetadata,
   CustomFieldFilters,
   CustomFieldFilterValue,

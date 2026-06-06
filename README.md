@@ -113,7 +113,7 @@ oriacall.agents.list();
 oriacall.agents.paginate();
 oriacall.calls.list();
 oriacall.calls.get("call-id");
-oriacall.calls.upload({ idempotencyKey: "crm-call-123", objectiveId: "objective-id", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
+oriacall.calls.upload({ idempotencyKey: "crm-call-123", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
 oriacall.calls.queueAnalysis("call-id");
 oriacall.calls.waitForAnalysis("call-id");
 oriacall.calls.paginate();
@@ -360,19 +360,21 @@ Required scope: `calls:read`.
 ```ts
 const response = await oriacall.calls.get("call-id");
 console.log(response.data.data.transcript);
+console.log(response.data.data.objectiveSelectionSource);
+console.log(response.data.data.analysis?.organizationDetectedTags);
 ```
 
 Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
 
 ### `oriacall.calls.upload(input)`
 
-Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call in an existing platform-managed objective, and optionally queues analysis.
+Uploads an audio recording, upserts the agent and lead by `externalId`, creates the call, and optionally queues analysis.
 
 Required scope: `calls:write`.
 
 The API requires an idempotency key for uploads. Reusing the same `idempotencyKey` with the same request returns the original response; reusing it with different metadata or audio returns an `idempotency_key_conflict` error.
 
-Objectives are managed in Oriacall. Use `oriacall.objectives.list()` to obtain the `objectiveId`.
+`objectiveId` is optional. When provided, Oriacall treats it as a hint for objective identification. The audio pass may override it; if no objective can be identified confidently, Oriacall uses the organization's superadmin-configured fallback objective.
 
 The maximum audio upload size is configured by an Oriacall superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
 
@@ -381,7 +383,7 @@ Options: `UploadCallInput`
 | Option | Type | Description |
 | --- | --- | --- |
 | `idempotencyKey` | `string` | Required unique key for safe retries. |
-| `objectiveId` | `string` | Required existing Oriacall objective ID. |
+| `objectiveId` | `string \| null` | Optional objective hint. Oriacall may override it during audio analysis. |
 | `externalId` | `string \| null` | Optional call ID from your system. |
 | `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
 | `agent.externalId` | `string` | Required agent ID from your system. |
@@ -406,7 +408,7 @@ const buffer = await readFile("./call.mp3");
 const response = await oriacall.calls.upload({
   idempotencyKey: "crm-call-789",
   externalId: "crm-call-789",
-  objectiveId: "objective-id",
+  objectiveId: "objective-id", // optional hint
   queueAnalysis: true,
   agent: {
     externalId: "agent-123",
@@ -430,6 +432,8 @@ const response = await oriacall.calls.upload({
 
 console.log(response.data.data.id, response.data.data.analysisStatus, response.requestId);
 ```
+
+Call responses include objective selection metadata: `objectiveHint`, `identifiedObjective`, `objectiveSelectionSource`, `objectiveIdentificationConfidence`, and `analysisStage`. Call detail analysis includes user-visible organization detections in `organizationDetectedTags` and `organizationDetectedParams`. Hidden global detections are never exposed by the API or SDK.
 
 Returns: `Promise<OriacallApiResponse<CallResponse>>`.
 
