@@ -509,12 +509,24 @@ export interface components {
             duration: number;
             score: number | null;
             sentiment: string | null;
-            /** @example completed */
-            analysisStatus: string;
-            /** @example objective_pass */
-            analysisStage: string | null;
-            /** @example processing */
-            queueStatus: string | null;
+            /**
+             * @description Public analysis status. Internal dead-letter and cancelled runs are exposed as failed; cancel-requested runs are exposed as processing.
+             * @example completed
+             * @enum {string}
+             */
+            analysisStatus: "pending" | "queued" | "processing" | "completed" | "failed";
+            /**
+             * @description Current queue stage. Null when analysis has not been queued.
+             * @example objective_pass
+             * @enum {string|null}
+             */
+            analysisStage: "audio_pass" | "objective_pass" | "publishing" | "completed" | null;
+            /**
+             * @description Public queue run status. Internal dead-letter and cancelled runs are exposed as failed; cancel-requested runs are exposed as processing. Null when analysis has not been queued.
+             * @example processing
+             * @enum {string|null}
+             */
+            queueStatus: "queued" | "processing" | "completed" | "failed" | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
