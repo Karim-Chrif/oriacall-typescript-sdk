@@ -385,6 +385,7 @@ Options: `UploadCallInput`
 | `idempotencyKey` | `string` | Required unique key for safe retries. |
 | `objectiveId` | `string \| null` | Optional objective hint. Oriacall may override it during audio analysis. |
 | `externalId` | `string \| null` | Optional call ID from your system. |
+| `recordedAt` | `string \| null` | Optional ISO 8601 datetime when the call was recorded in your source system. Returned as `recordedAt`; `createdAt` remains the Oriacall upload time. |
 | `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
 | `agent.externalId` | `string` | Required agent ID from your system. |
 | `agent.name` | `string` | Required when creating a new agent. |
@@ -408,6 +409,7 @@ const buffer = await readFile("./call.mp3");
 const response = await oriacall.calls.upload({
   idempotencyKey: "crm-call-789",
   externalId: "crm-call-789",
+  recordedAt: "2026-06-10T14:30:00Z",
   objectiveId: "objective-id", // optional hint
   queueAnalysis: true,
   agent: {

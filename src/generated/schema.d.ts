@@ -527,6 +527,11 @@ export interface components {
              * @enum {string|null}
              */
             queueStatus: "queued" | "processing" | "completed" | "failed" | null;
+            /**
+             * Format: date-time
+             * @description Original datetime when the source call was recorded, when provided by the uploading platform. Null for calls uploaded before this field existed or when the source platform does not provide it.
+             */
+            recordedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -572,6 +577,11 @@ export interface components {
         CallUploadMetadata: {
             /** @description Optional call ID from your system. Must be unique within the organization when provided. */
             externalId?: string | null;
+            /**
+             * Format: date-time
+             * @description Original datetime when the call was recorded in your source system. If omitted, Oriacall still records createdAt as the upload time.
+             */
+            recordedAt?: string | null;
             /**
              * Format: uuid
              * @description Optional objective hint. The audio pass can override it; if no objective is identified confidently, the organization fallback objective is used.
