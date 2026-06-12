@@ -58,6 +58,9 @@ export interface ListCallsOptions extends ListObjectivesOptions {
   agentId?: string;
   createdAfter?: string;
   createdBefore?: string;
+  recordedAfter?: string;
+  recordedBefore?: string;
+  sortBy?: "createdAt" | "recordedAt";
   leadCustomFields?: CustomFieldFilters;
 }
 

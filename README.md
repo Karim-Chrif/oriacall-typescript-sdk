@@ -332,22 +332,28 @@ Options: `ListCallsOptions`
 | `agentId` | `string` | Optional agent ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for call creation time. |
 | `createdBefore` | `string` | Optional ISO 8601 upper bound for call creation time. |
+| `recordedAfter` | `string` | Optional ISO 8601 lower bound for source recording time. Falls back to `createdAt` when `recordedAt` is null. |
+| `recordedBefore` | `string` | Optional ISO 8601 upper bound for source recording time. Falls back to `createdAt` when `recordedAt` is null. |
+| `sortBy` | `"createdAt" \| "recordedAt"` | Optional sort field. Defaults to `createdAt`; `recordedAt` falls back to `createdAt` when null. |
 | `leadCustomFields` | `Record<string, CustomFieldFilterValue>` | Optional filters on lead custom fields attached to calls. |
 
 ```ts
 const response = await oriacall.calls.list({
   limit: 50,
   objectiveId: "objective-id",
-  createdAfter: "2026-01-01T00:00:00.000Z",
+  recordedAfter: "2026-01-01T00:00:00.000Z",
+  sortBy: "recordedAt",
   leadCustomFields: {
     crm_stage: "qualified",
   },
 });
 
 for (const call of response.data.data) {
-  console.log(call.id, call.status, call.createdAt);
+  console.log(call.id, call.status, call.recordedAt, call.createdAt);
 }
 ```
+
+`createdAfter` and `createdBefore` filter by Oriacall upload/record creation time. Use `recordedAfter`, `recordedBefore`, and `sortBy: "recordedAt"` for original call chronology.
 
 Returns: `Promise<OriacallApiResponse<CallsListResponse>>`.
 

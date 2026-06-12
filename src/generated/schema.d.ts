@@ -1189,6 +1189,12 @@ export interface operations {
                 createdAfter?: string;
                 /** @description Return calls created at or before this timestamp. */
                 createdBefore?: string;
+                /** @description Return calls recorded at or after this timestamp. Uses recordedAt when available, otherwise createdAt for calls without a source recording timestamp. */
+                recordedAfter?: string;
+                /** @description Return calls recorded at or before this timestamp. Uses recordedAt when available, otherwise createdAt for calls without a source recording timestamp. */
+                recordedBefore?: string;
+                /** @description Sort calls by Oriacall creation time or source recording time. The recordedAt option falls back to createdAt when recordedAt is null. */
+                sortBy?: "createdAt" | "recordedAt";
                 /** @description Filter calls by lead custom fields. Use equality by default, or one operator such as gte, lte, contains, before, or after. */
                 leadCustom?: components["schemas"]["CustomFieldFilters"];
             };
