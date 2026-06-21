@@ -366,8 +366,8 @@ Required scope: `calls:read`.
 ```ts
 const response = await oriacall.calls.get("call-id");
 console.log(response.data.data.transcript);
-console.log(response.data.data.objectiveSelectionSource);
-console.log(response.data.data.analysis?.organizationDetectedTags);
+console.log(response.data.data.callResult);
+console.log(response.data.data.analysis?.callObservations);
 ```
 
 Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
@@ -380,7 +380,7 @@ Required scope: `calls:write`.
 
 The API requires an idempotency key for uploads. Reusing the same `idempotencyKey` with the same request returns the original response; reusing it with different metadata or audio returns an `idempotency_key_conflict` error.
 
-`objectiveId` is optional. When provided, Oriacall treats it as a hint for objective identification. The audio pass may override it; if no objective can be identified confidently, Oriacall uses the organization's superadmin-configured fallback objective.
+`objectiveId` is optional. When provided, Oriacall associates the call with that organization objective. When omitted, Oriacall associates the call with an existing objective in the organization.
 
 The maximum audio upload size is configured by an Oriacall superadmin and defaults to 20 MB. Your server/proxy upload limits must also allow that size.
 
@@ -389,7 +389,7 @@ Options: `UploadCallInput`
 | Option | Type | Description |
 | --- | --- | --- |
 | `idempotencyKey` | `string` | Required unique key for safe retries. |
-| `objectiveId` | `string \| null` | Optional objective hint. Oriacall may override it during audio analysis. |
+| `objectiveId` | `string \| null` | Optional organization objective ID. |
 | `externalId` | `string \| null` | Optional call ID from your system. |
 | `recordedAt` | `string \| null` | Optional ISO 8601 datetime when the call was recorded in your source system. Returned as `recordedAt`; `createdAt` remains the Oriacall upload time. |
 | `queueAnalysis` | `boolean` | Optional. Defaults to `true`; set `false` to upload now and queue later. |
@@ -416,7 +416,7 @@ const response = await oriacall.calls.upload({
   idempotencyKey: "crm-call-789",
   externalId: "crm-call-789",
   recordedAt: "2026-06-10T14:30:00Z",
-  objectiveId: "objective-id", // optional hint
+  objectiveId: "objective-id", // optional organization objective
   queueAnalysis: true,
   agent: {
     externalId: "agent-123",
@@ -441,7 +441,7 @@ const response = await oriacall.calls.upload({
 console.log(response.data.data.id, response.data.data.analysisStatus, response.requestId);
 ```
 
-Call responses include objective selection metadata: `objectiveHint`, `identifiedObjective`, `objectiveSelectionSource`, `objectiveIdentificationConfidence`, and `analysisStage`. `analysisStatus` is one of `pending`, `queued`, `processing`, `completed`, or `failed`. `queueStatus` is `queued`, `processing`, `completed`, `failed`, or `null` when analysis has not been queued. `analysisStage` is `audio_pass`, `objective_pass`, `publishing`, `completed`, or `null` when analysis has not been queued. Internal dead-letter and cancelled runs are exposed as `failed`. Call detail analysis includes user-visible organization detections in `organizationDetectedTags` and `organizationDetectedParams`. Hidden global detections are never exposed by the API or SDK.
+Call summaries include `callResult`, `callResultLabel`, and `callQualityScore`. `analysisStatus` is one of `pending`, `queued`, `processing`, `completed`, or `failed`. `queueStatus` is `queued`, `processing`, `completed`, `failed`, or `null` when analysis has not been queued. `analysisStage` is `audio_pass`, `text_pass`, `publishing`, `completed`, or `null` when analysis has not been queued. Internal dead-letter and cancelled runs are exposed as `failed`. Completed call analysis includes `summary`, `callStrengths`, `callWeaknesses`, `callObservations`, `objections`, and `alerts`.
 
 Returns: `Promise<OriacallApiResponse<CallResponse>>`.
 

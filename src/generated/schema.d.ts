@@ -119,7 +119,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a call and optionally queue analysis
-         * @description Uploads a call recording, upserts the agent and lead by externalId, creates the call in an existing platform-managed objective, and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by an Oriacall superadmin and defaults to 20 MB.
+         * @description Uploads a call recording, upserts the agent and lead by externalId, associates the call with the requested organization objective (or an existing organization objective when objectiveId is omitted), and optionally queues analysis. Requires an Idempotency-Key header for safe retries. The audio size limit is configured by an Oriacall superadmin and defaults to 20 MB.
          */
         post: operations["uploadCall"];
         delete?: never;
@@ -497,18 +497,17 @@ export interface components {
             /** @description Optional ID from an external system. */
             externalId: string | null;
             objective: components["schemas"]["ResourceSummary"];
-            objectiveHint: components["schemas"]["ResourceSummary"];
-            identifiedObjective: components["schemas"]["ResourceSummary"];
-            /** @description How Oriacall selected the objective: ai, fallback, or hint. */
-            objectiveSelectionSource: string | null;
-            /** Format: float */
-            objectiveIdentificationConfidence: number | null;
             lead: components["schemas"]["LeadSummary"];
             agent: components["schemas"]["AgentSummary"];
             /** @description Call duration in seconds. */
             duration: number;
             score: number | null;
             sentiment: string | null;
+            /** @description Machine-readable classification result for the call. */
+            callResult: string | null;
+            /** @description Human-readable classification label for the call. */
+            callResultLabel: string | null;
+            callQualityScore: number | null;
             /**
              * @description Public analysis status. Internal dead-letter and cancelled runs are exposed as failed; cancel-requested runs are exposed as processing.
              * @example completed
@@ -517,10 +516,10 @@ export interface components {
             analysisStatus: "pending" | "queued" | "processing" | "completed" | "failed";
             /**
              * @description Current queue stage. Null when analysis has not been queued.
-             * @example objective_pass
+             * @example text_pass
              * @enum {string|null}
              */
-            analysisStage: "audio_pass" | "objective_pass" | "publishing" | "completed" | null;
+            analysisStage: "audio_pass" | "text_pass" | "publishing" | "completed" | null;
             /**
              * @description Public queue run status. Internal dead-letter and cancelled runs are exposed as failed; cancel-requested runs are exposed as processing. Null when analysis has not been queued.
              * @example processing
@@ -545,19 +544,23 @@ export interface components {
         };
         CallAnalysis: {
             summary: string | null;
-            totalScore: number;
-            totalMax: number;
+            /** @description Machine-readable classification result for the call. */
+            callResult: string;
+            /** @description Human-readable classification label for the call. */
+            callResultLabel: string;
+            callQualityScore: number;
             sentiment: string;
-            objectiveMet: boolean;
-            objectiveNotes: string | null;
-            detectedTags: string[] | null;
-            /** @description Organization-level tags detected during the audio pass. Hidden global tags are not exposed. */
-            organizationDetectedTags: string[] | null;
-            detectedParams: components["schemas"]["AnalysisParam"][];
-            /** @description Organization-level parameters detected during the audio pass. Hidden global parameters are not exposed. */
-            organizationDetectedParams: components["schemas"]["AnalysisParam"][];
-            strengths: string[] | null;
-            weaknesses: string[] | null;
+            callStrengths: string[];
+            callWeaknesses: string[];
+            callObservations: {
+                [key: string]: unknown;
+            };
+            objections: {
+                [key: string]: unknown;
+            }[];
+            alerts: {
+                [key: string]: unknown;
+            }[];
         } | null;
         AnalysisParam: {
             key: string;
@@ -584,7 +587,7 @@ export interface components {
             recordedAt?: string | null;
             /**
              * Format: uuid
-             * @description Optional objective hint. The audio pass can override it; if no objective is identified confidently, the organization fallback objective is used.
+             * @description Optional organization objective ID. When omitted, Oriacall associates the call with an existing objective in the organization.
              */
             objectiveId?: string | null;
             /**
@@ -1466,7 +1469,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Organization AI settings, evaluation grid, or audio file is missing. */
+            /** @description Organization AI settings, an organization objective, or an audio file is missing. */
             422: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
