@@ -1,10 +1,10 @@
 {
   "name": "@oriacall/sdk",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "TypeScript SDK for the Oriacall Developer API.",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Karim-Chrif/oriacall-typescript-sdk.git"
+    "url": "git+https://github.com/Karim-Chrif/oriacall-typescript-sdk.git"
   },
   "bugs": {
     "url": "https://github.com/Karim-Chrif/oriacall-typescript-sdk/issues"
