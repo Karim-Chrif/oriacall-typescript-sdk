@@ -1,6 +1,6 @@
 {
   "name": "@oriacall/sdk",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "TypeScript SDK for the Oriacall Developer API.",
   "repository": {
     "type": "git",

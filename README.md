@@ -363,6 +363,8 @@ Gets a call detail record, including transcript data when available.
 
 Required scope: `calls:read`.
 
+Transcript turn `speaker` values can be `agent`, `client`, or `system`. `system` represents telephony infrastructure such as voicemail greetings, carrier messages, transfer prompts, or tones; it is not a human participant.
+
 ```ts
 const response = await oriacall.calls.get("call-id");
 console.log(response.data.data.transcript);

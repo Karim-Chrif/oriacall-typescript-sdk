@@ -537,9 +537,18 @@ export interface components {
             updatedAt: string;
         };
         CallDetail: components["schemas"]["CallSummary"] & {
-            transcript: {
+            transcript: ({
+                /**
+                 * @description Transcript speaker role. `system` represents telephony infrastructure such as voicemail greetings, carrier messages, transfer prompts, or tones.
+                 * @enum {string}
+                 */
+                speaker?: "agent" | "client" | "system";
+                /** @example 00:12 */
+                time?: string | null;
+                text?: string;
+            } & {
                 [key: string]: unknown;
-            }[] | null;
+            })[] | null;
             analysis: components["schemas"]["CallAnalysis"];
         };
         CallAnalysis: {
