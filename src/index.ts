@@ -8,6 +8,7 @@ export type {
   CallSummary,
   CallAnalysis,
   AnalysisParam,
+  CallUpdateRequest,
   CallUploadMetadata,
   CustomFieldFilters,
   CustomFieldFilterValue,

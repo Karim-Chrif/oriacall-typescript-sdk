@@ -13,6 +13,7 @@ export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 export type CallsListResponse = components["schemas"]["CallsListResponse"];
 export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
 export type CallResponse = components["schemas"]["CallResponse"];
+export type CallUpdateRequest = components["schemas"]["CallUpdateRequest"];
 export type CallUploadMetadata = components["schemas"]["CallUploadMetadata"];
 export type LeadsListResponse = components["schemas"]["LeadsListResponse"];
 export type LeadDetailResponse = components["schemas"]["LeadDetailResponse"];
@@ -214,6 +215,10 @@ export function createOriacallClient(options: OriacallClientOptions) {
 
   async function getCall(callId: string): Promise<OriacallApiResponse<CallDetailResponse>> {
     return apiGet<CallDetailResponse>(`/v1/calls/${encodeURIComponent(callId)}`);
+  }
+
+  async function updateCall(callId: string, input: CallUpdateRequest): Promise<OriacallApiResponse<CallResponse>> {
+    return apiJson<CallResponse>("PATCH", `/v1/calls/${encodeURIComponent(callId)}`, input);
   }
 
   async function uploadCall(input: UploadCallInput): Promise<OriacallApiResponse<CallResponse>> {
@@ -443,6 +448,7 @@ export function createOriacallClient(options: OriacallClientOptions) {
     calls: {
       list: listCalls,
       get: getCall,
+      update: updateCall,
       upload: uploadCall,
       queueAnalysis: queueCallAnalysis,
       waitForAnalysis: waitForCallAnalysis,

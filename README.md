@@ -113,6 +113,7 @@ oriacall.agents.list();
 oriacall.agents.paginate();
 oriacall.calls.list();
 oriacall.calls.get("call-id");
+oriacall.calls.update("call-id", { recordedAt: "2026-06-10T14:30:00Z" });
 oriacall.calls.upload({ idempotencyKey: "crm-call-123", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
 oriacall.calls.queueAnalysis("call-id");
 oriacall.calls.waitForAnalysis("call-id");
@@ -373,6 +374,23 @@ console.log(response.data.data.analysis?.callObservations);
 ```
 
 Returns: `Promise<OriacallApiResponse<CallDetailResponse>>`.
+
+### `oriacall.calls.update(callId, input)`
+
+Updates original source recording time for a call.
+
+Required scope: `calls:write`.
+
+Input: `CallUpdateRequest`
+
+```ts
+const response = await oriacall.calls.update("call-id", {
+  recordedAt: "2026-06-10T14:30:00Z",
+});
+console.log(response.data.data.recordedAt, response.requestId);
+```
+
+Returns: `Promise<OriacallApiResponse<CallResponse>>`.
 
 ### `oriacall.calls.upload(input)`
 
@@ -966,6 +984,7 @@ import type {
   CallResponse,
   CallsListResponse,
   CallSummary,
+  CallUpdateRequest,
   CallUploadMetadata,
   CustomFieldFilters,
   CustomFieldFilterValue,

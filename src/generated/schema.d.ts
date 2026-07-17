@@ -145,7 +145,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update a call
+         * @description Updates the original source recording time for an organization-scoped call.
+         */
+        patch: operations["updateCall"];
         trace?: never;
     };
     "/v1/calls/{callId}/analysis-jobs": {
@@ -585,6 +589,13 @@ export interface components {
         };
         CallResponse: {
             data: components["schemas"]["CallSummary"];
+        };
+        CallUpdateRequest: {
+            /**
+             * Format: date-time
+             * @description Original datetime when the call was recorded in the source system.
+             */
+            recordedAt: string;
         };
         CallUploadMetadata: {
             /** @description Optional call ID from your system. Must be unique within the organization when provided. */
@@ -1336,7 +1347,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Multipart upload or metadata failed validation. */
+            /** @description Multipart upload or metadata failed validation, organization AI settings are missing, or organization AI analysis is disabled. */
             422: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
@@ -1392,6 +1403,88 @@ export interface operations {
             };
             /** @description Call was not found in the API client's organization. */
             404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateCall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Call ID. */
+                callId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Call updated. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the required scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Call was not found in the API client's organization. */
+            404: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
                     [name: string]: unknown;
@@ -1478,7 +1571,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Organization AI settings, an organization objective, or an audio file is missing. */
+            /** @description Organization AI settings, an organization objective, or an audio file is missing, or organization/agent AI analysis is disabled. */
             422: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
