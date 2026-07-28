@@ -5,6 +5,8 @@ export type {
   CallDetailResponse,
   CallResponse,
   CallsListResponse,
+  CallsLookupRequest,
+  CallsLookupResponse,
   CallSummary,
   CallAnalysis,
   AnalysisParam,

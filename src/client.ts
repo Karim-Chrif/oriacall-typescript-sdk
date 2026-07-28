@@ -11,6 +11,8 @@ export type ObjectiveResponse = components["schemas"]["ObjectiveResponse"];
 export type ObjectiveUpdateRequest = components["schemas"]["ObjectiveUpdateRequest"];
 export type AgentsListResponse = components["schemas"]["AgentsListResponse"];
 export type CallsListResponse = components["schemas"]["CallsListResponse"];
+export type CallsLookupRequest = components["schemas"]["CallsLookupRequest"];
+export type CallsLookupResponse = components["schemas"]["CallsLookupResponse"];
 export type CallDetailResponse = components["schemas"]["CallDetailResponse"];
 export type CallResponse = components["schemas"]["CallResponse"];
 export type CallUpdateRequest = components["schemas"]["CallUpdateRequest"];
@@ -212,6 +214,12 @@ export function createOriacallClient(options: OriacallClientOptions) {
 
   async function listCalls(listOptions: ListCallsOptions = {}): Promise<OriacallApiResponse<CallsListResponse>> {
     return apiGet<CallsListResponse>("/v1/calls", listOptions);
+  }
+
+  async function lookupCallsByExternalIds(externalIds: string[]): Promise<OriacallApiResponse<CallsLookupResponse>> {
+    const input: CallsLookupRequest = { externalIds };
+
+    return apiJson<CallsLookupResponse>("POST", "/v1/calls/lookup", input);
   }
 
   async function getCall(callId: string): Promise<OriacallApiResponse<CallDetailResponse>> {
@@ -448,6 +456,7 @@ export function createOriacallClient(options: OriacallClientOptions) {
     },
     calls: {
       list: listCalls,
+      lookupByExternalIds: lookupCallsByExternalIds,
       get: getCall,
       update: updateCall,
       upload: uploadCall,

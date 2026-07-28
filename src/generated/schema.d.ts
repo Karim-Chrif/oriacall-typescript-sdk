@@ -128,6 +128,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/calls/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Look up calls by external IDs
+         * @description Returns every call in the API client's organization whose externalId exactly and case-sensitively matches one of the requested values. Multiple calls with the same externalId are all returned so clients can detect ambiguity. The response does not expose transcripts or audio.
+         */
+        post: operations["lookupCalls"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/calls/{callId}": {
         parameters: {
             query?: never;
@@ -583,6 +603,13 @@ export interface components {
         CallsListResponse: {
             data: components["schemas"]["CallSummary"][];
             pagination: components["schemas"]["CursorPagination"];
+        };
+        CallsLookupRequest: {
+            /** @description Distinct external call IDs to match exactly and case-sensitively. */
+            externalIds: string[];
+        };
+        CallsLookupResponse: {
+            data: components["schemas"]["CallSummary"][];
         };
         CallDetailResponse: {
             data: components["schemas"]["CallDetail"];
@@ -1208,7 +1235,7 @@ export interface operations {
                 leadId?: string;
                 /** @description Filter calls to an agent ID. */
                 agentId?: string;
-                /** @description Filter calls by an exact external ID match. */
+                /** @description Filter calls by a case-sensitive exact external ID match. The value must not be empty. */
                 externalId?: string;
                 /** @description Return calls created at or after this timestamp. */
                 createdAfter?: string;
@@ -1353,6 +1380,75 @@ export interface operations {
             422: {
                 headers: {
                     "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookupCalls: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallsLookupRequest"];
+            };
+        };
+        responses: {
+            /** @description Matching calls. The array is empty when no calls match. */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallsLookupResponse"];
+                };
+            };
+            /** @description Bearer token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Bearer token does not include the calls:read scope. */
+            403: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request body failed validation. */
+            422: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Per-client rate limit exceeded. */
+            429: {
+                headers: {
+                    "X-Request-Id": components["headers"]["XRequestId"];
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: string;
+                    /** @description Request limit per minute for this API client. */
+                    "X-RateLimit-Limit"?: string;
                     [name: string]: unknown;
                 };
                 content: {

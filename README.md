@@ -59,6 +59,9 @@ console.log(hello.data.message, hello.requestId);
 
 const calls = await oriacall.calls.list({ externalId: "crm-call-123" });
 console.log(calls.data.data, calls.requestId);
+
+const matchingCalls = await oriacall.calls.lookupByExternalIds(["crm-call-123", "crm-call-456"]);
+console.log(matchingCalls.data.data, matchingCalls.requestId);
 ```
 
 The SDK requests and caches a short-lived access token using client credentials, then sends it as a bearer token for API calls.
@@ -112,6 +115,7 @@ oriacall.objectiveCustomFields.update("region", { label: "Sales Region" });
 oriacall.agents.list();
 oriacall.agents.paginate();
 oriacall.calls.list();
+oriacall.calls.lookupByExternalIds(["crm-call-123", "crm-call-456"]);
 oriacall.calls.get("call-id");
 oriacall.calls.update("call-id", { recordedAt: "2026-06-10T14:30:00Z" });
 oriacall.calls.upload({ idempotencyKey: "crm-call-123", agent: { externalId: "agent-1", name: "Morgan" }, lead: { externalId: "lead-1", firstName: "Ada", lastName: "Lovelace" }, audio: { file: audioBlob, filename: "call.mp3" } });
@@ -359,6 +363,29 @@ for (const call of response.data.data) {
 `createdAfter` and `createdBefore` filter by Oriacall upload/record creation time. Use `recordedAfter`, `recordedBefore`, and `sortBy: "recordedAt"` for original call chronology.
 
 Returns: `Promise<OriacallApiResponse<CallsListResponse>>`.
+
+### `oriacall.calls.lookupByExternalIds(externalIds)`
+
+Looks up calls whose external IDs exactly and case-sensitively match any requested value. Every matching call is returned, including multiple calls sharing an external ID, and the response does not include transcripts or audio.
+
+Required scope: `calls:read`.
+
+Input: `string[]`. Pass 1 to 100 distinct, nonempty external IDs; each ID can be at most 255 characters.
+
+```ts
+const response = await oriacall.calls.lookupByExternalIds([
+  "crm-call-123",
+  "crm-call-456",
+]);
+
+for (const call of response.data.data) {
+  console.log(call.id, call.externalId, call.status);
+}
+```
+
+The returned array is empty when none of the external IDs match.
+
+Returns: `Promise<OriacallApiResponse<CallsLookupResponse>>`.
 
 ### `oriacall.calls.get(callId)`
 
@@ -985,6 +1012,8 @@ import type {
   CallDetailResponse,
   CallResponse,
   CallsListResponse,
+  CallsLookupRequest,
+  CallsLookupResponse,
   CallSummary,
   CallUpdateRequest,
   CallUploadMetadata,
