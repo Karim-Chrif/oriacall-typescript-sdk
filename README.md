@@ -57,7 +57,7 @@ const oriacall = createOriacallClient({
 const hello = await oriacall.hello.get();
 console.log(hello.data.message, hello.requestId);
 
-const calls = await oriacall.calls.list({ limit: 50 });
+const calls = await oriacall.calls.list({ externalId: "crm-call-123" });
 console.log(calls.data.data, calls.requestId);
 ```
 
@@ -331,6 +331,7 @@ Options: `ListCallsOptions`
 | `objectiveId` | `string` | Optional objective ID filter. |
 | `leadId` | `string` | Optional lead ID filter. |
 | `agentId` | `string` | Optional agent ID filter. |
+| `externalId` | `string` | Optional exact external ID filter. |
 | `createdAfter` | `string` | Optional ISO 8601 lower bound for call creation time. |
 | `createdBefore` | `string` | Optional ISO 8601 upper bound for call creation time. |
 | `recordedAfter` | `string` | Optional ISO 8601 lower bound for source recording time. Falls back to `createdAt` when `recordedAt` is null. |
@@ -341,6 +342,7 @@ Options: `ListCallsOptions`
 ```ts
 const response = await oriacall.calls.list({
   limit: 50,
+  externalId: "crm-call-123",
   objectiveId: "objective-id",
   recordedAfter: "2026-01-01T00:00:00.000Z",
   sortBy: "recordedAt",

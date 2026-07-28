@@ -57,6 +57,7 @@ export interface ListCallsOptions extends ListObjectivesOptions {
   objectiveId?: string;
   leadId?: string;
   agentId?: string;
+  externalId?: string;
   createdAfter?: string;
   createdBefore?: string;
   recordedAfter?: string;

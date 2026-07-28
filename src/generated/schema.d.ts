@@ -1208,6 +1208,8 @@ export interface operations {
                 leadId?: string;
                 /** @description Filter calls to an agent ID. */
                 agentId?: string;
+                /** @description Filter calls by an exact external ID match. */
+                externalId?: string;
                 /** @description Return calls created at or after this timestamp. */
                 createdAfter?: string;
                 /** @description Return calls created at or before this timestamp. */
